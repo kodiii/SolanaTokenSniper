@@ -1,0 +1,24 @@
+.verbose-logging-settings {
+  padding: 20px;
+  height: 100%;
+}
+
+.log-container {
+  background-color: #1e1e1e;
+  color: #ffffff;
+  padding: 15px;
+  border-radius: 5px;
+  height: calc(100% - 60px);
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.log-entry {
+  margin-bottom: 5px;
+  white-space: pre-wrap;
+}
+
+.log-entry:last-child {
+  margin-bottom: 0;
+}

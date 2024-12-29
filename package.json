@@ -15,8 +15,9 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/express": "^4.17.21",
     "@types/luxon": "^3.4.2",
-    "@types/node": "^22.10.1",
+    "@types/node": "^22.10.2",
     "@types/ws": "^8.5.13",
     "eslint": "^9.15.0",
     "globals": "^15.12.0",
@@ -30,6 +31,7 @@
     "axios": "^1.7.8",
     "bs58": "^6.0.0",
     "dotenv": "^16.4.5",
+    "express": "^4.21.2",
     "luxon": "^3.5.0",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",

@@ -1,0 +1,207 @@
+.app {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.main-layout {
+  display: grid;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .main-layout {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.left-column {
+  background: #1e1e1e;
+  padding: 2rem;
+  border-radius: 8px;
+}
+
+.right-column {
+  background: #1e1e1e;
+  padding: 2rem;
+  border-radius: 8px;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tab-buttons button {
+  background: #333;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #fff;
+}
+
+.tab-buttons button.active {
+  background: #646cff;
+}
+
+.transactions-dashboard table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.transactions-dashboard th,
+.transactions-dashboard td {
+  padding: 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid #444;
+}
+
+.transactions-dashboard .positive {
+  color: #4caf50;
+}
+
+.transactions-dashboard .negative {
+  color: #f44336;
+}
+
+.documentation-tab .section {
+  margin-bottom: 1.5rem;
+}
+
+.documentation-tab h4 {
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.documentation-tab ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.documentation-tab li {
+  margin-bottom: 0.5rem;
+  color: #ccc;
+}
+
+.settings-section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #2d2d2d;
+  border-radius: 4px;
+}
+
+.settings-section h2 {
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  color: #fff;
+  margin-bottom: 0.75rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="password"],
+.form-group select {
+  width: 100%;
+  max-width: 95%;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #333;
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.settings-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #2d2d2d;
+  border-radius: 4px;
+}
+
+.form-group input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+}
+
+.not-allowed-condition {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  background: #646cff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #535bf2;
+}
+
+/* Accordion Styles */
+.accordion {
+  margin-bottom: 1rem;
+  border: 1px solid #444;
+  border-radius: 4px;
+}
+
+.accordion-header {
+  width: 100%;
+  padding: 1rem;
+  text-align: left;
+  background: #333;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.accordion-header:hover {
+  background: #444;
+}
+
+.accordion-header .arrow {
+  transition: transform 0.2s ease;
+}
+
+.accordion-header .arrow.open {
+  transform: rotate(180deg);
+}
+
+.accordion-content {
+  padding: 1rem;
+  background: #2d2d2d;
+  border-top: 1px solid #444;
+}
+
+.setting-detail {
+  margin-bottom: 1.5rem;
+}
+
+.setting-detail h4 {
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.setting-detail p {
+  color: #ccc;
+  line-height: 1.5;
+}

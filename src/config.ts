@@ -10,7 +10,7 @@ export const config = {
     get_timeout: 10000, // Timeout for API requests
   },
   swap: {
-    verbose_log: false,
+    verbose_log: true,
     prio_fee_max_lamports: 1000000, // 0.001 SOL
     prio_level: "veryHigh", // If you want to land transaction fast, set this to use `veryHigh`. You will pay on average higher priority fee.
     amount: "10000000", //0.01 SOL
@@ -29,7 +29,7 @@ export const config = {
     track_public_wallet: "", // If set an additional log line will be shown with a link to track your wallet
   },
   rug_check: {
-    verbose_log: false,
+    verbose_log: true,
     single_holder_ownership: 30,
     low_liquidity: 1000,
     not_allowed: ["Freeze Authority still enabled", "Copycat token"], //"Large Amount of LP Unlocked", "Low amount of LP Providers"
