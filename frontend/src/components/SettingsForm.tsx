@@ -95,13 +95,13 @@ const SettingsForm: React.FC = () => {
   const handleSave = async () => {
     try {
       const envContent = `
-${privateKey ? `PRIV_KEY_WALLET="${privateKey}"` : `WALLET_PUBLIC_KEY="${walletPublicKey}"`}
-HELIUS_HTTPS_URI="${mainRpc}"
-HELIUS_WSS_URI="${fallbackRpc}"
-HELIUS_HTTPS_URI_TX="${transactionRpc}"
-JUP_HTTPS_QUOTE_URI="https://quote-api.jup.ag/v6/quote"
-JUP_HTTPS_SWAP_URI="https://quote-api.jup.ag/v6/swap"
-JUP_HTTPS_PRICE_URI="https://api.jup.ag/price/v2"
+        ${privateKey ? `PRIV_KEY_WALLET="${privateKey}"` : `WALLET_PUBLIC_KEY="${walletPublicKey}"`}
+        HELIUS_HTTPS_URI="${mainRpc}"
+        HELIUS_WSS_URI="${fallbackRpc}"
+        HELIUS_HTTPS_URI_TX="${transactionRpc}"
+        JUP_HTTPS_QUOTE_URI="https://quote-api.jup.ag/v6/quote"
+        JUP_HTTPS_SWAP_URI="https://quote-api.jup.ag/v6/swap"
+        JUP_HTTPS_PRICE_URI="https://api.jup.ag/price/v2"
       `.trim();
 
       console.log('Sending request to update .env file...');
