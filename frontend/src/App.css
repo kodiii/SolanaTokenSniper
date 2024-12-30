@@ -1,12 +1,16 @@
 .app {
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 1rem;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #242424;
+  padding: 0.5rem;
 }
 
 .main-layout {
   display: grid;
   gap: 0.5rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  height: 100%;
 }
 
 @media (min-width: 768px) {
@@ -18,13 +22,17 @@
 .left-column {
   background: #1e1e1e;
   padding: 2rem;
-  border-radius: 8px;
+  border-radius: 12px;
+  height: fit-content;
+  min-height: calc(100vh - 4rem);
 }
 
 .right-column {
   background: #1e1e1e;
   padding: 2rem;
-  border-radius: 8px;
+  border-radius: 12px;
+  height: fit-content;
+  min-height: calc(100vh - 4rem);
 }
 
 .tab-buttons {
@@ -100,13 +108,14 @@
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .form-group label {
   display: block;
   color: #fff;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
 }
 
 .form-group input[type="text"],
@@ -114,56 +123,35 @@
 .form-group input[type="password"],
 .form-group select {
   width: 100%;
-  max-width: 95%;
   padding: 0.5rem;
   border-radius: 4px;
   border: 1px solid #444;
   background: #333;
   color: #fff;
-  margin-bottom: 1rem;
-}
-
-.settings-section {
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  background: #2d2d2d;
-  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
 }
 
 .form-group input[type="checkbox"] {
-  width: 1rem;
-  height: 1rem;
+  margin-right: 0.5rem;
 }
 
-.not-allowed-condition {
+.form-group .checkbox-label {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
   margin-bottom: 0.5rem;
 }
 
-button {
-  padding: 0.5rem 1rem;
-  background: #646cff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #535bf2;
-}
-
-/* Accordion Styles */
 .accordion {
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   border: 1px solid #444;
   border-radius: 4px;
+  overflow: hidden;
 }
 
 .accordion-header {
   width: 100%;
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   text-align: left;
   background: #333;
   border: none;
@@ -172,6 +160,8 @@ button:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 0.95rem;
+  font-weight: 500;
 }
 
 .accordion-header:hover {
@@ -192,6 +182,10 @@ button:hover {
   border-top: 1px solid #444;
 }
 
+.accordion-content .form-group:last-child {
+  margin-bottom: 0;
+}
+
 .setting-detail {
   margin-bottom: 1.5rem;
 }
@@ -204,4 +198,23 @@ button:hover {
 .setting-detail p {
   color: #ccc;
   line-height: 1.5;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  background: #646cff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #535bf2;
+}
+
+.not-allowed-condition {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }

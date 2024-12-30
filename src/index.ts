@@ -3,9 +3,15 @@ import dotenv from "dotenv"; // zero-dependency module that loads environment va
 import { WebSocketRequest } from "./types"; // Typescript Types for type safety
 import { config } from "./config"; // Configuration parameters for our bot
 import { fetchTransactionDetails, createSwapTransaction, getRugCheckConfirmed, fetchAndSaveSwapDetails } from "./transactions";
+import { app, port } from './server';
 
 // Load environment variables from the .env file
 dotenv.config();
+
+// Start the HTTP server
+app.listen(port, () => {
+  console.log(`🚀 HTTP Server running on port ${port}`);
+});
 
 // Function used to open our websocket connection
 function sendRequest(ws: WebSocket): void {
@@ -124,18 +130,20 @@ async function websocketHandler(): Promise<void> {
     }
   });
 
-  ws.on("error", (err: Error) => {
-    console.error("WebSocket error:", err);
+  // Handle WebSocket errors
+  ws.on("error", (error: Error) => {
+    console.error("WebSocket error:", error);
+    ws = null;
+    setTimeout(websocketHandler, 5000);
   });
 
+  // Handle WebSocket closure
   ws.on("close", () => {
-    // Connection closed, discard old websocket and create a new one in 5 seconds
+    console.log("\n🔒 WebSocket is closed. Restarting in 5 seconds...");
     ws = null;
-    if (!transactionOngoing) {
-      console.log("WebSocket is closed. Restarting in 5 seconds...");
-      setTimeout(websocketHandler, 5000);
-    }
+    setTimeout(websocketHandler, 5000);
   });
 }
 
+// Start the WebSocket handler
 websocketHandler();

@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import { PublicKey } from '@solana/web3.js';
 import Accordion from './Accordion';
 import LiquidityPoolSettings from './LiquidityPoolSettings';
 import TransactionSettings from './TransactionSettings';
 import SwapSettings from './SwapSettings';
 import SellSettings from './SellSettings';
 import RugCheckSettings from './RugCheckSettings';
+import { Web3Wallet } from './Web3Wallet';
+import './SettingsForm.css';
 
 interface Settings {
   liquidityPool: {
@@ -46,9 +49,10 @@ interface Settings {
 
 const SettingsForm: React.FC = () => {
   const [privateKey, setPrivateKey] = useState('');
-  const [mainRpc, setMainRpc] = useState('');
-  const [fallbackRpc, setFallbackRpc] = useState('');
-  const [transactionRpc, setTransactionRpc] = useState('');
+  const [walletPublicKey, setWalletPublicKey] = useState<string | null>(null);
+  const [mainRpc, setMainRpc] = useState('https://mainnet.helius-rpc.com/?api-key=');
+  const [fallbackRpc, setFallbackRpc] = useState('wss://mainnet.helius-rpc.com/?api-key=');
+  const [transactionRpc, setTransactionRpc] = useState('https://api.helius.xyz/v0/transactions/?api-key=');
   
   const [settings, setSettings] = useState<Settings>({
     liquidityPool: {
@@ -91,7 +95,7 @@ const SettingsForm: React.FC = () => {
   const handleSave = async () => {
     try {
       const envContent = `
-PRIV_KEY_WALLET="${privateKey}"
+${privateKey ? `PRIV_KEY_WALLET="${privateKey}"` : `WALLET_PUBLIC_KEY="${walletPublicKey}"`}
 HELIUS_HTTPS_URI="${mainRpc}"
 HELIUS_WSS_URI="${fallbackRpc}"
 HELIUS_HTTPS_URI_TX="${transactionRpc}"
@@ -100,6 +104,7 @@ JUP_HTTPS_SWAP_URI="https://quote-api.jup.ag/v6/swap"
 JUP_HTTPS_PRICE_URI="https://api.jup.ag/price/v2"
       `.trim();
 
+      console.log('Sending request to update .env file...');
       const response = await fetch('/api/update-env', {
         method: 'POST',
         headers: {
@@ -109,13 +114,15 @@ JUP_HTTPS_PRICE_URI="https://api.jup.ag/price/v2"
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update .env file');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update .env file');
       }
 
-      console.log('Settings and .env updated successfully');
+      const data = await response.json();
+      console.log('Settings saved successfully:', data.message);
     } catch (error) {
       console.error('Error saving settings:', error);
-      alert('Failed to save settings. Please try again.');
+      alert(`Failed to save settings: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -124,34 +131,48 @@ JUP_HTTPS_PRICE_URI="https://api.jup.ag/price/v2"
       <h1>Solana Token Sniper Settings</h1>
       <div className="settings-section">
         <h2>Wallet Settings</h2>
-        <div className="form-group">
-          <label>Private Key</label>
-          <input
-            type="password"
-            value={privateKey}
-            onChange={(e) => setPrivateKey(e.target.value)}
-            placeholder="Enter private key"
-          />
+        <div className="wallet-input-container">
+          <div className="form-group">
+            <label>Private Key {privateKey && <span className="ticker">✓</span>}</label>
+            <input
+              type="password"
+              value={privateKey}
+              onChange={(e) => setPrivateKey(e.target.value)}
+              placeholder="Enter private key"
+            />
+          </div>
+          <div className="wallet-connect-container">
+            <Web3Wallet
+              onWalletConnected={(publicKey: PublicKey) => setWalletPublicKey(publicKey.toString())}
+              onWalletDisconnected={() => setWalletPublicKey(null)}
+            />
+            {walletPublicKey && (
+              <div className="wallet-info">
+                Connected Wallet: {walletPublicKey}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <Accordion title="RPC Settings">
+      <div className="settings-section">
+        <h2>RPC Settings</h2>
         <div className="form-group">
           <label>Main RPC URL</label>
           <input
             type="text"
             value={mainRpc}
             onChange={(e) => setMainRpc(e.target.value)}
-            placeholder="Enter main RPC URL"
+            placeholder="Enter Helius RPC URL"
           />
         </div>
         <div className="form-group">
-          <label>Fallback RPC URL</label>
+          <label>WebSocket RPC URL</label>
           <input
             type="text"
             value={fallbackRpc}
             onChange={(e) => setFallbackRpc(e.target.value)}
-            placeholder="Enter fallback RPC URL"
+            placeholder="Enter Helius WebSocket URL"
           />
         </div>
         <div className="form-group">
@@ -160,10 +181,10 @@ JUP_HTTPS_PRICE_URI="https://api.jup.ag/price/v2"
             type="text"
             value={transactionRpc}
             onChange={(e) => setTransactionRpc(e.target.value)}
-            placeholder="Enter transaction RPC URL"
+            placeholder="Enter Helius Transaction API URL"
           />
         </div>
-      </Accordion>
+      </div>
 
       <Accordion title="Liquidity Pool Settings">
         <LiquidityPoolSettings 

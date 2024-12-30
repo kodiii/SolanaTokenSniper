@@ -1,4 +1,5 @@
 import React from 'react';
+import './Settings.css';
 
 interface SellSettingsProps {
   settings: {
@@ -41,85 +42,82 @@ const SellSettings: React.FC<SellSettingsProps> = ({ settings, onChange }) => {
     <div className="settings-section">
       <h2>Sell Settings</h2>
       <div className="form-group">
-        <label>
-          Priority Fee (Lamports):
-          <input
-            type="number"
-            name="prioFeeMaxLamports"
-            value={settings.prioFeeMaxLamports}
-            onChange={handleChange}
-          />
-        </label>
+        <label htmlFor="prioFeeMaxLamports">Priority Fee Max (Lamports)</label>
+        <input
+          type="number"
+          id="prioFeeMaxLamports"
+          name="prioFeeMaxLamports"
+          value={settings.prioFeeMaxLamports}
+          onChange={handleChange}
+        />
       </div>
       <div className="form-group">
-        <label>
-          Priority Level:
-          <select
-            name="prioLevel"
-            value={settings.prioLevel}
-            onChange={handleChange}
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="veryHigh">Very High</option>
-          </select>
-        </label>
+        <label htmlFor="prioLevel">Priority Level</label>
+        <select
+          id="prioLevel"
+          name="prioLevel"
+          value={settings.prioLevel}
+          onChange={handleChange}
+          className="select-input"
+        >
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="veryHigh">Very High</option>
+        </select>
       </div>
       <div className="form-group">
-        <label>
-          Slippage (BPS):
-          <input
-            type="text"
-            name="slippageBps"
-            value={settings.slippageBps}
-            onChange={handleChange}
-          />
-        </label>
+        <label htmlFor="slippageBps">Slippage (BPS)</label>
+        <input
+          type="text"
+          id="slippageBps"
+          name="slippageBps"
+          value={settings.slippageBps}
+          onChange={handleChange}
+        />
       </div>
       <div className="form-group">
-        <label>
+        <div className="checkbox-wrapper">
           <input
             type="checkbox"
+            id="autoSell"
             name="autoSell"
             checked={settings.autoSell}
             onChange={handleChange}
           />
-          Auto Sell
-        </label>
+          <label htmlFor="autoSell">Enable Auto Sell</label>
+        </div>
       </div>
       <div className="form-group">
-        <label>
-          Stop Loss (%):
-          <input
-            type="number"
-            name="stopLossPercent"
-            value={settings.stopLossPercent}
-            onChange={handleChange}
-          />
-        </label>
+        <label htmlFor="stopLossPercent">Stop Loss (%)</label>
+        <input
+          type="number"
+          id="stopLossPercent"
+          name="stopLossPercent"
+          value={settings.stopLossPercent}
+          onChange={handleChange}
+        />
       </div>
       <div className="form-group">
-        <label>
-          Take Profit (%):
-          <input
-            type="number"
-            name="takeProfitPercent"
-            value={settings.takeProfitPercent}
-            onChange={handleChange}
-          />
-        </label>
+        <label htmlFor="takeProfitPercent">Take Profit (%)</label>
+        <input
+          type="number"
+          id="takeProfitPercent"
+          name="takeProfitPercent"
+          value={settings.takeProfitPercent}
+          onChange={handleChange}
+        />
       </div>
       <div className="form-group">
-        <label>
-          Track Public Wallet:
-          <input
-            type="text"
-            name="trackPublicWallet"
-            value={settings.trackPublicWallet}
-            onChange={handleChange}
-          />
-        </label>
+        <label htmlFor="trackPublicWallet">Track Public Wallet</label>
+        <input
+          type="text"
+          id="trackPublicWallet"
+          name="trackPublicWallet"
+          value={settings.trackPublicWallet}
+          onChange={handleChange}
+          placeholder="Enter wallet address to track"
+        />
       </div>
     </div>
   );

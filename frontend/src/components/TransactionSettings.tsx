@@ -26,37 +26,34 @@ const TransactionSettings: React.FC<TransactionSettingsProps> = ({ settings, onC
     <div className="settings-section">
       <h2>Transaction Settings</h2>
       <div className="form-group">
-        <label>
-          Retry Interval (ms):
-          <input
-            type="number"
-            name="getRetryInterval"
-            value={settings.getRetryInterval}
-            onChange={handleChange}
-          />
-        </label>
+        <label htmlFor="getRetryInterval">Retry Interval (ms)</label>
+        <input
+          type="number"
+          id="getRetryInterval"
+          name="getRetryInterval"
+          value={settings.getRetryInterval}
+          onChange={handleChange}
+        />
       </div>
       <div className="form-group">
-        <label>
-          Retry Timeout (ms):
-          <input
-            type="number"
-            name="getRetryTimeout"
-            value={settings.getRetryTimeout}
-            onChange={handleChange}
-          />
-        </label>
+        <label htmlFor="getRetryTimeout">Retry Timeout (ms)</label>
+        <input
+          type="number"
+          id="getRetryTimeout"
+          name="getRetryTimeout"
+          value={settings.getRetryTimeout}
+          onChange={handleChange}
+        />
       </div>
       <div className="form-group">
-        <label>
-          API Timeout (ms):
-          <input
-            type="number"
-            name="getTimeout"
-            value={settings.getTimeout}
-            onChange={handleChange}
-          />
-        </label>
+        <label htmlFor="getTimeout">Timeout (ms)</label>
+        <input
+          type="number"
+          id="getTimeout"
+          name="getTimeout"
+          value={settings.getTimeout}
+          onChange={handleChange}
+        />
       </div>
     </div>
   );

@@ -1,0 +1,135 @@
+.web3-wallet {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.wallet-connect-button {
+  background: linear-gradient(90deg, #3b82f6 0%, #4f46e5 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.wallet-connect-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.wallet-disconnect-button {
+  background-color: #1f2937;
+  color: #9ca3af;
+  border: 1px solid #374151;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: all 0.2s ease;
+}
+
+.wallet-disconnect-button:hover {
+  background-color: #374151;
+  color: white;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.wallet-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.wallet-modal-content {
+  background-color: #1a1a1a;
+  border: 1px solid #2d2d2d;
+  border-radius: 16px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: slideIn 0.3s ease-out;
+}
+
+.wallet-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #2d2d2d;
+}
+
+.wallet-modal-header h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.close-modal:hover {
+  color: #9ca3af;
+}
+
+.wallet-modal-body {
+  padding: 24px;
+}
+
+.wallet-option {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  background-color: #2d2d2d;
+  border: 1px solid #3d3d3d;
+  border-radius: 12px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wallet-option:last-child {
+  margin-bottom: 0;
+}
+
+.wallet-option:hover {
+  background-color: #3d3d3d;
+  transform: translateY(-1px);
+}
+
+.wallet-option img {
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+  border-radius: 6px;
+}

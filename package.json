@@ -8,7 +8,8 @@
     "dev": "ts-node src/index.ts",
     "tracker": "ts-node src/tracker/index.ts",
     "test": "ts-node src/test.ts",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "dev:full": "concurrently \"npm run dev\" \"npm run frontend\""
   },
   "keywords": [],
   "author": "https://x.com/digbenjamins",
@@ -19,6 +20,7 @@
     "@types/luxon": "^3.4.2",
     "@types/node": "^22.10.2",
     "@types/ws": "^8.5.13",
+    "concurrently": "^9.1.1",
     "eslint": "^9.15.0",
     "globals": "^15.12.0",
     "ts-node": "^10.9.2",
@@ -28,8 +30,10 @@
   "dependencies": {
     "@project-serum/anchor": "^0.26.0",
     "@solana/web3.js": "^1.95.5",
+    "@types/cors": "^2.8.17",
     "axios": "^1.7.8",
     "bs58": "^6.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
     "luxon": "^3.5.0",

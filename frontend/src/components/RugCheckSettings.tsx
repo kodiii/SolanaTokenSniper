@@ -1,4 +1,5 @@
 import React from 'react';
+import './Settings.css';
 
 interface RugCheckSettingsProps {
   settings: {
@@ -52,37 +53,36 @@ const RugCheckSettings: React.FC<RugCheckSettingsProps> = ({ settings, onChange 
     <div className="settings-section">
       <h2>Rug Check Settings</h2>
       <div className="form-group">
-        <label>
+        <div className="checkbox-wrapper">
           <input
             type="checkbox"
+            id="verboseLog"
             name="verboseLog"
             checked={settings.verboseLog}
             onChange={handleChange}
           />
-          Verbose Logging
-        </label>
+          <label htmlFor="verboseLog">Enable Verbose Logging</label>
+        </div>
       </div>
       <div className="form-group">
-        <label>
-          Single Holder Ownership (%):
-          <input
-            type="number"
-            name="singleHolderOwnership"
-            value={settings.singleHolderOwnership}
-            onChange={handleChange}
-          />
-        </label>
+        <label htmlFor="singleHolderOwnership">Single Holder Ownership (%)</label>
+        <input
+          type="number"
+          id="singleHolderOwnership"
+          name="singleHolderOwnership"
+          value={settings.singleHolderOwnership}
+          onChange={handleChange}
+        />
       </div>
       <div className="form-group">
-        <label>
-          Low Liquidity Threshold (USD):
-          <input
-            type="number"
-            name="lowLiquidity"
-            value={settings.lowLiquidity}
-            onChange={handleChange}
-          />
-        </label>
+        <label htmlFor="lowLiquidity">Low Liquidity Threshold (USD)</label>
+        <input
+          type="number"
+          id="lowLiquidity"
+          name="lowLiquidity"
+          value={settings.lowLiquidity}
+          onChange={handleChange}
+        />
       </div>
       <div className="form-group">
         <h3>Not Allowed Conditions</h3>
@@ -90,10 +90,17 @@ const RugCheckSettings: React.FC<RugCheckSettingsProps> = ({ settings, onChange 
           <div key={index} className="not-allowed-condition">
             <input
               type="text"
+              id={`notAllowed-${index}`}
               value={condition}
               onChange={(e) => handleNotAllowedChange(index, e.target.value)}
+              placeholder="Enter condition"
             />
-            <button onClick={() => removeNotAllowedCondition(index)}>Remove</button>
+            <button 
+              onClick={() => removeNotAllowedCondition(index)}
+              className="remove-button"
+            >
+              Remove
+            </button>
           </div>
         ))}
         <button onClick={addNotAllowedCondition}>Add Condition</button>
