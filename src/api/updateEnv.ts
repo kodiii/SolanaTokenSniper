@@ -4,7 +4,38 @@ import path from 'path';
 
 const router: express.Router = express.Router();
 
-router.post('/update-env', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+// GET endpoint to read current environment settings
+router.get('/update-env', async (req: express.Request, res: express.Response) => {
+  try {
+    const envPath = path.resolve(process.cwd(), '.env');
+    console.log('Reading .env file from:', envPath);
+    
+    if (!fs.existsSync(envPath)) {
+      console.log('.env file not found');
+      return res.status(404).json({ message: 'Environment file not found' });
+    }
+
+    const envContent = await fs.promises.readFile(envPath, 'utf8');
+    const envVars: { [key: string]: string } = {};
+    
+    // Parse the .env file content
+    envContent.split('\n').forEach(line => {
+      const [key, ...valueParts] = line.split('=');
+      if (key && valueParts.length > 0) {
+        envVars[key.trim()] = valueParts.join('=').trim();
+      }
+    });
+
+    console.log('Successfully read .env file');
+    res.json({ content: envVars });
+  } catch (error: unknown) {
+    console.error('Error reading .env file:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    res.status(500).json({ message: 'Error reading environment settings', error: errorMessage });
+  }
+});
+
+router.post('/update-env', async (req: express.Request, res: express.Response) => {
   try {
     console.log('Received request to update .env file');
     const { content } = req.body;
@@ -25,28 +56,16 @@ router.post('/update-env', async (req: express.Request, res: express.Response, n
       await fs.promises.copyFile(envPath, backupPath);
     }
 
-    // Ensure the directory exists
-    const envDir = path.dirname(envPath);
-    if (!fs.existsSync(envDir)) {
-      console.log('Creating directory:', envDir);
-      await fs.promises.mkdir(envDir, { recursive: true });
-    }
-
-    // Write the new content to the .env file
-    await fs.promises.writeFile(envPath, content, 'utf8');
-    console.log('.env file updated successfully');
-
-    // Reload environment variables
-    require('dotenv').config();
-
-    return res.status(200).json({ 
-      message: '.env file updated successfully',
-      path: envPath
-    });
-  } catch (error) {
+    // Write the new content
+    await fs.promises.writeFile(envPath, content);
+    console.log('Successfully updated .env file');
+    
+    res.json({ message: 'Environment file updated successfully' });
+  } catch (error: unknown) {
     console.error('Error updating .env file:', error);
-    next(error); // Pass error to error handling middleware
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    res.status(500).json({ message: 'Error updating environment settings', error: errorMessage });
   }
 });
 
-export const updateEnvRouter: express.Router = router;
+export const updateEnvRouter = router;

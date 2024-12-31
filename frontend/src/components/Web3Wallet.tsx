@@ -1,104 +1,69 @@
-import React, { useState, useEffect } from 'react';
-import './Web3Wallet.css';
-import { PublicKey } from '@solana/web3.js';
+import React, { useEffect } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { WalletProvider, useWallet, Wallet } from '@solana/wallet-adapter-react';
-import { WalletDialogProvider } from '@solana/wallet-adapter-material-ui';
-import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { PublicKey } from '@solana/web3.js';
+import './Web3Wallet.css';
 
 interface Web3WalletProps {
   onWalletConnected: (publicKey: PublicKey) => void;
   onWalletDisconnected: () => void;
+  onNetworkChange?: (network: WalletAdapterNetwork) => void;
 }
 
-const Web3WalletComponent: React.FC<Web3WalletProps> = ({ onWalletConnected, onWalletDisconnected }) => {
-  const { publicKey, connected, disconnect, wallets, select } = useWallet();
-  const [showModal, setShowModal] = useState(false);
+export const Web3Wallet: React.FC<Web3WalletProps> = ({ 
+  onWalletConnected, 
+  onWalletDisconnected,
+  onNetworkChange 
+}) => {
+  const { publicKey, connected } = useWallet();
 
   useEffect(() => {
-    if (connected && publicKey) {
+    const checkNetwork = async () => {
+      if (!connected || !publicKey) {
+        onWalletDisconnected();
+        return;
+      }
+
       onWalletConnected(publicKey);
-      setShowModal(false);
-    } else {
-      onWalletDisconnected();
-    }
-  }, [connected, publicKey, onWalletConnected, onWalletDisconnected]);
 
-  const handleWalletSelect = (wallet: Wallet) => {
-    select(wallet.adapter.name);
-  };
+      try {
+        const response = await fetch('/api/update-env', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        if (!response.ok) {
+          console.error('API error:', await response.json().catch(() => ({})));
+          onNetworkChange?.(WalletAdapterNetwork.Mainnet);
+          return;
+        }
+        
+        const data = await response.json();
+        const rpcUrl = data?.content?.HELIUS_HTTPS_URI || '';
+        console.log('RPC URL:', rpcUrl);
+        
+        const network = rpcUrl.toLowerCase().includes('devnet') 
+          ? WalletAdapterNetwork.Devnet 
+          : WalletAdapterNetwork.Mainnet;
+        
+        console.log('Setting network to:', network);
+        onNetworkChange?.(network);
+      } catch (error) {
+        console.error('Error checking network:', error);
+        onNetworkChange?.(WalletAdapterNetwork.Mainnet);
+      }
+    };
+
+    checkNetwork();
+  }, [connected, publicKey, onWalletConnected, onWalletDisconnected, onNetworkChange]);
 
   return (
-    <div className="web3-wallet">
-      <button 
-        className="wallet-connect-button"
-        onClick={() => setShowModal(true)}
-      >
-        {connected ? (
-          <span>
-            {publicKey?.toBase58().slice(0, 4)}...
-            {publicKey?.toBase58().slice(-4)}
-          </span>
-        ) : (
-          'Connect Wallet'
-        )}
-      </button>
-
-      {showModal && (
-        <div className="wallet-modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="wallet-modal-content" onClick={e => e.stopPropagation()}>
-            <div className="wallet-modal-header">
-              <h3>Connect Wallet</h3>
-              <button 
-                className="close-modal"
-                onClick={() => setShowModal(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="wallet-modal-body">
-              {wallets.map((wallet) => (
-                <button
-                  key={wallet.adapter.name}
-                  className="wallet-option"
-                  onClick={() => handleWalletSelect(wallet)}
-                >
-                  <img 
-                    src={wallet.adapter.icon} 
-                    alt={wallet.adapter.name}
-                  />
-                  {wallet.adapter.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {connected && (
-        <button 
-          className="wallet-disconnect-button"
-          onClick={disconnect}
-        >
-          Disconnect
-        </button>
-      )}
+    <div className="wallet-adapter-dropdown">
+      <WalletMultiButton />
     </div>
-  );
-};
-
-export const Web3Wallet: React.FC<Web3WalletProps> = (props) => {
-  const network = WalletAdapterNetwork.Mainnet;
-  const wallets = [
-    new PhantomWalletAdapter(),
-    new SolflareWalletAdapter({ network }),
-  ];
-
-  return (
-    <WalletProvider wallets={wallets} autoConnect>
-      <WalletDialogProvider>
-        <Web3WalletComponent {...props} />
-      </WalletDialogProvider>
-    </WalletProvider>
   );
 };

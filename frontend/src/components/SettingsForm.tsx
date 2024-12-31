@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PublicKey } from '@solana/web3.js';
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import Accordion from './Accordion';
 import LiquidityPoolSettings from './LiquidityPoolSettings';
 import TransactionSettings from './TransactionSettings';
@@ -50,6 +51,7 @@ interface Settings {
 const SettingsForm: React.FC = () => {
   const [privateKey, setPrivateKey] = useState('');
   const [walletPublicKey, setWalletPublicKey] = useState<string | null>(null);
+  const [currentNetwork, setCurrentNetwork] = useState<WalletAdapterNetwork | null>(null);
   const [mainRpc, setMainRpc] = useState('https://mainnet.helius-rpc.com/?api-key=');
   const [fallbackRpc, setFallbackRpc] = useState('wss://mainnet.helius-rpc.com/?api-key=');
   const [transactionRpc, setTransactionRpc] = useState('https://api.helius.xyz/v0/transactions/?api-key=');
@@ -126,6 +128,11 @@ const SettingsForm: React.FC = () => {
     }
   };
 
+  const handleNetworkChange = (network: WalletAdapterNetwork) => {
+    console.log('Network changed:', network);
+    setCurrentNetwork(network);
+  };
+
   return (
     <div className="settings-form">
       <h1>Solana Token Sniper Settings</h1>
@@ -145,6 +152,7 @@ const SettingsForm: React.FC = () => {
             <Web3Wallet
               onWalletConnected={(publicKey: PublicKey) => setWalletPublicKey(publicKey.toString())}
               onWalletDisconnected={() => setWalletPublicKey(null)}
+              onNetworkChange={handleNetworkChange}
             />
             {walletPublicKey && (
               <div className="wallet-info">
@@ -156,7 +164,14 @@ const SettingsForm: React.FC = () => {
       </div>
 
       <div className="settings-section">
-        <h2>RPC Settings</h2>
+        <div className="section-header">
+          <h2>RPC Endpoints</h2>
+          {currentNetwork && (
+            <div className={`network-badge ${currentNetwork.toLowerCase()}`}>
+              {currentNetwork}
+            </div>
+          )}
+        </div>
         <div className="form-group">
           <label>Main RPC URL</label>
           <input

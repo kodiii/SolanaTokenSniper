@@ -1,59 +1,139 @@
-This repository contains all the code "as is", following the "Solana Sniper Trading Bot in TypeScript" on YouTube provided by [DigitalBenjamins](https://x.com/digbenjamins).
+# Solana Token Sniper 
 
-Part 1: Snipe New Tokens from Raydium LP
+## Project Overview
 
-[![Solana Sniper Trading Bot in TypeScript](https://img.youtube.com/vi/vsMbnsdHOIQ/0.jpg)](https://www.youtube.com/watch?v=vsMbnsdHOIQ)
+The Solana Token Sniper is an advanced, open-source trading automation tool designed for the Solana blockchain. Built with TypeScript, this project provides a robust solution for token trading, featuring automated buying, selling, and advanced market tracking capabilities.
 
-Part 2: Track and sell tokens (SL/TP)
+### Tutorial Series
+- [Part 1: Snipe New Tokens from Raydium LP](https://www.youtube.com/watch?v=vsMbnsdHOIQ)
+- [Part 2: Track and Sell Tokens (SL/TP)](https://www.youtube.com/watch?v=4CdXLywg2O8)
 
-[![Solana Sniper Trading Bot in TypeScript](https://img.youtube.com/vi/4CdXLywg2O8/0.jpg)](https://www.youtube.com/watch?v=4CdXLywg2O8)
+## Key Features
 
-You can find the YouTube tutorial here: https://www.youtube.com/watch?v=vsMbnsdHOIQ
+### Trading Automation
+- Automated token purchase on Raydium liquidity pools
+- Customizable buy parameters (amount, slippage, priority)
+- Advanced sell strategies with Stop Loss and Take Profit
+- Rug check integration with rugcheck.xyz
+- Option to skip pump.fun tokens
 
-## Project Description
+### Technical Capabilities
+- Real-time token tracking
+- Local database storage for token information
+- Flexible RPC node configuration
+- Wallet management utilities
 
-The Solana Token Sniper is a Node.js project built with TypeScript, designed to automate the buying and selling of tokens on the Solana blockchain. This script is configured to detect the creation of new liquidity pools and execute token purchases automatically.
+## Technology Stack
 
-With customizable parameters, you can tailor the strategy to suit your needs. The primary goal of this project is to educate users about the essential components required to develop a simple token sniper, offering insights into its functionality and implementation!
+### Backend
+- **Language**: TypeScript
+- **Runtime**: Node.js
+- **Blockchain Interaction**: 
+  - `@solana/web3.js`
+  - `@solana/wallet-adapter`
+- **Database**: SQLite3
+- **HTTP Requests**: Fetch API
 
-### Features
+### Frontend
+- **Framework**: React with Vite
+- **Language**: TypeScript
+- **State Management**: React Hooks
+- **Wallet Integration**: 
+  - `@solana/wallet-adapter-react`
+  - `@solana/wallet-adapter-react-ui`
+- **Styling**: CSS with modern layout techniques
 
-- Token Sniper for Raydium for the Solana blockchain
-- Rug check using a third party service rugcheck.xyz
-- Possibility to skip pump.fun tokens
-- Auto-buy with parameters for amount, slippage and priority
-- Possibility to set own RPC nodes
-- Track and store tokens in local database
-- Auto-sell feature using Stop Loss and Take Profit
-- Utils: Solana Wallet (keypair) creator
+### External Services
+- **RPC Provider**: Helius
+- **Swap API**: Jupiter Aggregator V6
+- **Rug Check**: rugcheck.xyz
 
-### Update Log
+## Project Structure
 
-- 21-dec-2024:19: Added createSellTransaction() in transactions.ts to sell SL and TP tokens.
-- 21-dec-2024:19: Added Retry logic for Swap Quote requests
-- 21-dec-2024:19: Added Verbose loging option
-- 18-dec-2024-22: Added tracker functionality in "src\tracker\index.ts".
-- 18-dec-2024-22: Updated fetchAndSaveSwapDetails() in transactions.ts to use sqlite3.
-- 18-dec-2024-22: Updated config.ts: Addded sell parameters
-- 18-dec-2024-22: Added packages: luxon, sqlite, sqlite3
-- 17-dec-2024-13: Added fetchAndSaveSwapDetails() in transactions.ts to track confirmed swaps.
-- 17-dec-2024-13: Updated test.ts
-- 17-dec-2024-13: Added JUP_HTTPS_PRICE_URI to .env.backup
-- 17-dec-2024-13: Web3.js updated from 1.95.8 to 1.98.0
-- 06-dec-2024-00: Initial Commit: Solana Sniper Bot
+```
+SolanaTokenSniper/
+│
+├── frontend/                   # React frontend
+│   ├── src/
+│   │   ├── components/         # React UI components
+│   │   ├── hooks/              # Custom React hooks
+│   │   └── utils/              # Utility functions
+│
+├── src/                        # Backend TypeScript source
+│   ├── tracker/                # Token tracking logic
+│   ├── transactions/           # Transaction handling
+│   └── config.ts               # Configuration management
+│
+├── .env                        # Environment configuration
+├── package.json                # Project dependencies
+└── README.md                   # Project documentation
+```
 
-### Third Party documentation
+## Getting Started
 
-- [Helius RPC nodes](https://docs.helius.dev)
+### Prerequisites
+- Node.js (v18+)
+- npm or yarn
+- Solana Wallet (Phantom or Solflare recommended)
+
+### Installation
+1. Clone the repository
+   ```bash
+   git clone https://github.com/yourusername/SolanaTokenSniper.git
+   ```
+
+2. Install dependencies
+   ```bash
+   npm install
+   ```
+
+3. Configure environment variables
+   ```bash
+   cp .env.example .env
+   # Edit .env with your specific configurations
+   ```
+
+### Running the Application
+- Development mode (full stack):
+  ```bash
+  npm run dev:full
+  ```
+- Backend only:
+  ```bash
+  npm run dev
+  ```
+- Frontend only:
+  ```bash
+  npm run frontend
+  ```
+
+## Security Considerations
+- Never share your private keys
+- Use environment variables for sensitive information
+- Understand the risks of automated trading
+
+## Recent Updates
+- Added createSellTransaction() for advanced selling
+- Implemented retry logic for swap quotes
+- Enhanced verbose logging
+- Integrated SQLite for local token tracking
+
+## Contributing
+Contributions are welcome! Please read our contributing guidelines before submitting pull requests.
+
+## License
+This project is open-source. See the LICENSE file for details.
+
+## Acknowledgements
+- [DigitalBenjamins](https://x.com/digbenjamins) - Original tutorial creator
+- Solana Community
+- Jupiter Aggregator
+- Helius RPC
+
+## External Documentation
+- [Helius RPC Nodes](https://docs.helius.dev)
 - [Jupiter V6 Swap API](https://station.jup.ag/docs/apis/swap-api)
-- [Rugcheck API](https://api.rugcheck.xyz/swagger/index.html)
-- [Solana](https://solana.com/docs)
-- [Solscan](https://solscan.io)
+- [Solana Web3.js](https://solana-labs.github.io/solana-web3.js/)
 
-### Disclaimer
-
-The course videos accompanying this project are provided free of charge and are intended solely for educational purposes. This software does not guarantee profitability or financial success and is not designed to generate profitable trades.
-
-You are solely responsible for your own financial decisions. Before making any trades or investments, it is strongly recommended that you consult with a qualified financial professional.
-
-By using this software, you acknowledge that the creators and contributors of this project shall not be held liable for any financial losses, damages, or other consequences resulting from its use. Use the software at your own risk.
+## Disclaimer
+This tool is for educational purposes. Cryptocurrency trading involves significant risk. Use responsibly and at your own risk.

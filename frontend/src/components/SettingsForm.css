@@ -17,6 +17,20 @@
   font-size: 1.5rem;
 }
 
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+  justify-content: space-between;
+}
+
+.section-header h2 {
+  color: #fff;
+  margin: 0;
+  font-size: 1.5rem;
+}
+
 .form-group {
   margin-bottom: 1.5rem;
 }
@@ -90,4 +104,23 @@ button:hover {
 button:disabled {
   background: #444;
   cursor: not-allowed;
+}
+
+.network-badge {
+  margin-top: -15px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.network-badge.devnet {
+  background-color: #ff9800;
+  color: white;
+}
+
+.network-badge.mainnet-beta {
+  background-color: #4caf50;
+  color: white;
 }
