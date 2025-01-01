@@ -206,3 +206,181 @@
 {"level":"info","message":"Fetching transactions from database","timestamp":"2025-01-01T18:14:35.690Z"}
 {"level":"info","message":"Found 5 transactions","timestamp":"2025-01-01T18:14:35.691Z"}
 {"level":"info","message":"Successfully sent transactions response","timestamp":"2025-01-01T18:14:35.691Z"}
+{"level":"info","message":"WebSocket is closed. Restarting in 5 seconds","timestamp":"2025-01-01T18:18:19.550Z"}
+{"level":"info","message":"WebSocket is open and listening","timestamp":"2025-01-01T18:18:25.504Z","wsUri":"wss://devnet.helius-rpc.com/?api-key=de70cfe8-6435-47ef-8cff-f9354b7c4d71"}
+{"level":"debug","message":"WebSocket message received","parsedData":{"id":1,"jsonrpc":"2.0","result":5151518},"timestamp":"2025-01-01T18:18:25.601Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:19:59.106Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:19:59.109Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:19:59.114Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:19:59.115Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:20:04.108Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:20:04.109Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:20:09.109Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:20:09.113Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:20:14.107Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:20:14.109Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:20:19.108Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:20:19.111Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:20:24.108Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:20:24.110Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:20:29.108Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:20:29.112Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:20:34.108Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:20:34.110Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:20:39.108Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:20:39.110Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:20:44.105Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:20:44.106Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:20:49.107Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:20:49.109Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:20:54.108Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:20:54.110Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:20:59.107Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:20:59.109Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:21:04.109Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:21:04.110Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:21:09.108Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:21:09.111Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:21:14.107Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:21:14.109Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:21:19.107Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:21:19.109Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:21:24.108Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:21:24.110Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:21:29.108Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:21:29.110Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:21:34.354Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:21:34.356Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:21:39.354Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:21:39.356Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:21:44.352Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:21:44.353Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:21:49.352Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:21:49.355Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:21:54.355Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:21:54.356Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:21:59.358Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:21:59.360Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:22:04.356Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:22:04.359Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:22:09.352Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:22:09.354Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:22:14.351Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:22:14.353Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:22:19.351Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:22:19.352Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:22:24.358Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:22:24.359Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:22:29.350Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:22:29.351Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:22:50.364Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:22:50.364Z"}
+{"level":"info","message":"WebSocket is closed. Restarting in 5 seconds","timestamp":"2025-01-01T18:23:25.607Z"}
+{"level":"info","message":"WebSocket is open and listening","timestamp":"2025-01-01T18:23:31.283Z","wsUri":"wss://devnet.helius-rpc.com/?api-key=de70cfe8-6435-47ef-8cff-f9354b7c4d71"}
+{"level":"debug","message":"WebSocket message received","parsedData":{"id":1,"jsonrpc":"2.0","result":5151620},"timestamp":"2025-01-01T18:23:31.403Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:23:50.372Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:23:50.374Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:24:50.359Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:24:50.361Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:25:15.976Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:25:15.978Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:25:19.110Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:25:19.113Z"}
+{"level":"info","message":"Opening database connection","timestamp":"2025-01-01T18:25:22.319Z"}
+{"level":"info","message":"Fetching transactions from database","timestamp":"2025-01-01T18:25:22.320Z"}
+{"level":"info","message":"Found 5 transactions","timestamp":"2025-01-01T18:25:22.321Z"}
+{"level":"info","message":"Successfully sent transactions response","timestamp":"2025-01-01T18:25:22.321Z"}
+{"level":"info","message":"Opening database connection","timestamp":"2025-01-01T18:25:22.325Z"}
+{"level":"info","message":"Fetching transactions from database","timestamp":"2025-01-01T18:25:22.326Z"}
+{"level":"info","message":"Found 5 transactions","timestamp":"2025-01-01T18:25:22.326Z"}
+{"level":"info","message":"Successfully sent transactions response","timestamp":"2025-01-01T18:25:22.327Z"}
+{"level":"info","message":"Opening database connection","timestamp":"2025-01-01T18:25:26.121Z"}
+{"level":"info","message":"Fetching transactions from database","timestamp":"2025-01-01T18:25:26.122Z"}
+{"level":"info","message":"Found 5 transactions","timestamp":"2025-01-01T18:25:26.123Z"}
+{"level":"info","message":"Successfully sent transactions response","timestamp":"2025-01-01T18:25:26.123Z"}
+{"level":"info","message":"Opening database connection","timestamp":"2025-01-01T18:25:26.126Z"}
+{"level":"info","message":"Fetching transactions from database","timestamp":"2025-01-01T18:25:26.127Z"}
+{"level":"info","message":"Found 5 transactions","timestamp":"2025-01-01T18:25:26.127Z"}
+{"level":"info","message":"Successfully sent transactions response","timestamp":"2025-01-01T18:25:26.128Z"}
+{"level":"info","message":"WebSocket is closed. Restarting in 5 seconds","timestamp":"2025-01-01T18:28:31.429Z"}
+{"level":"info","message":"WebSocket is open and listening","timestamp":"2025-01-01T18:28:37.646Z","wsUri":"wss://devnet.helius-rpc.com/?api-key=de70cfe8-6435-47ef-8cff-f9354b7c4d71"}
+{"level":"debug","message":"WebSocket message received","parsedData":{"id":1,"jsonrpc":"2.0","result":5151904},"timestamp":"2025-01-01T18:28:37.748Z"}
+{"level":"info","message":"Opening database connection","timestamp":"2025-01-01T18:31:44.646Z"}
+{"level":"info","message":"Fetching transactions from database","timestamp":"2025-01-01T18:31:44.648Z"}
+{"level":"info","message":"Found 5 transactions","timestamp":"2025-01-01T18:31:44.649Z"}
+{"level":"info","message":"Successfully sent transactions response","timestamp":"2025-01-01T18:31:44.650Z"}
+{"level":"info","message":"Opening database connection","timestamp":"2025-01-01T18:31:44.654Z"}
+{"level":"info","message":"Fetching transactions from database","timestamp":"2025-01-01T18:31:44.654Z"}
+{"level":"info","message":"Found 5 transactions","timestamp":"2025-01-01T18:31:44.655Z"}
+{"level":"info","message":"Successfully sent transactions response","timestamp":"2025-01-01T18:31:44.655Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:31:46.419Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:31:46.421Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:31:46.423Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:31:46.423Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:31:51.420Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:31:51.421Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:31:56.420Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:31:56.421Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:32:01.420Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:32:01.421Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:32:06.420Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:32:06.421Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:32:11.421Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:32:11.422Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:32:16.422Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:32:16.423Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:32:21.420Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:32:21.421Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:32:26.421Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:32:26.422Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:32:31.421Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:32:31.422Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:32:36.421Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:32:36.422Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:32:41.420Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:32:41.421Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:32:46.420Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:32:46.421Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:32:51.420Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:32:51.421Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:32:56.420Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:32:56.421Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:33:01.421Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:33:01.422Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:33:06.420Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:33:06.421Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:33:11.420Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:33:11.421Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:33:16.420Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:33:16.421Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:33:21.422Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:33:21.423Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:33:26.421Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:33:26.423Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:33:31.421Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:33:31.422Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:33:36.420Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:33:36.421Z"}
+{"level":"info","message":"WebSocket is closed. Restarting in 5 seconds","timestamp":"2025-01-01T18:33:37.754Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:33:41.421Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:33:41.422Z"}
+{"level":"info","message":"WebSocket is open and listening","timestamp":"2025-01-01T18:33:43.250Z","wsUri":"wss://devnet.helius-rpc.com/?api-key=de70cfe8-6435-47ef-8cff-f9354b7c4d71"}
+{"level":"debug","message":"WebSocket message received","parsedData":{"id":1,"jsonrpc":"2.0","result":4725867},"timestamp":"2025-01-01T18:33:43.357Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:33:46.419Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:33:46.420Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:33:51.420Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:33:51.421Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:33:56.421Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:33:56.422Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:34:01.421Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:34:01.421Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:34:06.422Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:34:06.424Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:34:11.419Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:34:11.420Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:34:16.420Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:34:16.422Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:34:21.421Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:34:21.422Z"}
+{"level":"info","message":"Fetching application logs","timestamp":"2025-01-01T18:34:26.421Z"}
+{"level":"info","message":"Successfully fetched 100 log entries","timestamp":"2025-01-01T18:34:26.422Z"}

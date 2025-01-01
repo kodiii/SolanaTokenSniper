@@ -23,9 +23,9 @@ export const config = {
     prio_fee_max_lamports: 1000000, // 0.001 SOL
     prio_level: "veryHigh", // If you want to land transaction fast, set this to use `veryHigh`. You will pay on average higher priority fee.
     slippageBps: "200", // 2%
-    auto_sell: false, // If set to true, stop loss and take profit triggers automatically when set.
-    stop_loss_percent: 100,
-    take_profit_percent: 20,
+    auto_sell: true, // If set to true, stop loss and take profit triggers automatically when set.
+    stop_loss_percent: 2,
+    take_profit_percent: 10,
     track_public_wallet: "", // If set an additional log line will be shown with a link to track your wallet
   },
   rug_check: {
