@@ -1,7 +1,6 @@
 .settings-form {
   max-width: 800px;
   margin: 0 auto;
-  padding: 2rem;
 }
 
 .settings-section {
@@ -104,6 +103,28 @@ button:hover {
 button:disabled {
   background: #444;
   cursor: not-allowed;
+}
+
+.save-settings-button {
+  margin-top: 2rem;
+  width: 100%;
+  padding: 1rem;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.save-settings-button:hover {
+  background: #45a049;
+}
+
+.save-settings-button:active {
+  background: #3d8b40;
 }
 
 .network-badge {

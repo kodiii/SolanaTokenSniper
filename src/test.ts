@@ -1,4 +1,5 @@
 import { fetchTransactionDetails, createSwapTransaction, getRugCheckConfirmed, fetchAndSaveSwapDetails, createSellTransaction } from "./transactions";
+import { Connection } from "@solana/web3.js";
 
 (async () => {
   const testId = null;
@@ -36,7 +37,10 @@ import { fetchTransactionDetails, createSwapTransaction, getRugCheckConfirmed, f
   const testId = "";
   const testAmount = "7";
   if (testId) {
-    const tx = await createSellTransaction("So11111111111111111111111111111111111111112", testId, testAmount);
+    // Mock connection and config for testing
+    const connection = new Connection("https://api.mainnet-beta.solana.com");
+    const config = {}; // assuming config is an empty object, replace with actual config if needed
+    const tx = await createSellTransaction("So11111111111111111111111111111111111111112", testId, connection, config, testAmount);
     console.log(tx);
   }
 })();

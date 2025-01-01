@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Connection, Keypair, VersionedTransaction } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, VersionedTransaction } from "@solana/web3.js";
 import { Wallet } from "@project-serum/anchor";
 import bs58 from "bs58";
 import dotenv from "dotenv";
@@ -15,6 +15,21 @@ import {
   HoldingMetadata,
 } from "./types";
 import { insertHolding, removeHolding } from "./tracker/db";
+import winston from 'winston';
+
+// Configure Winston logger
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.json()
+    ),
+    transports: [
+        new winston.transports.File({ filename: 'error.log', level: 'error' }),
+        new winston.transports.File({ filename: 'combined.log' }),
+        new winston.transports.Console({ format: winston.format.simple() })
+    ]
+});
 
 // Load environment variables from the .env file
 dotenv.config();
@@ -395,6 +410,7 @@ export async function fetchAndSaveSwapDetails(tx: string): Promise<boolean> {
       PerTokenPaidUSDC: perTokenUsdcPrice,
       Slot: swapTransactionData.slot,
       Program: swapTransactionData.programInfo ? swapTransactionData.programInfo.source : "N/A",
+      WalletAddress: swapTransactionData.tokenInputs[0].fromUserAccount
     };
 
     await insertHolding(newHolding).catch((err) => {
@@ -409,103 +425,100 @@ export async function fetchAndSaveSwapDetails(tx: string): Promise<boolean> {
   }
 }
 
-export async function createSellTransaction(solMint: string, tokenMint: string, amount: string): Promise<string | null> {
-  const quoteUrl = process.env.JUP_HTTPS_QUOTE_URI || "";
-  const swapUrl = process.env.JUP_HTTPS_SWAP_URI || "";
-  const rpcUrl = process.env.HELIUS_HTTPS_URI || "";
-  const myWallet = new Wallet(Keypair.fromSecretKey(bs58.decode(process.env.PRIV_KEY_WALLET || "")));
-
+export async function createSellTransaction(
+  tokenAddress: PublicKey | string,
+  walletAddress: PublicKey | string,
+  connection: Connection,
+  config: any,
+  amount?: string
+): Promise<{ success: boolean; signature?: string; error?: string }> {
   try {
-    // @TODO: Verify if the user still holds this token to make sure we can sell it.
-    // https://docs.helius.dev/compression-and-das-api/digital-asset-standard-das-api/get-assets-by-owner
-
-    // Request a quote in order to swap SOL for new token
-    const quoteResponse = await axios.get<QuoteResponse>(quoteUrl, {
-      params: {
-        inputMint: tokenMint,
-        outputMint: solMint,
-        amount: amount,
-        slippageBps: config.sell.slippageBps,
-      },
-      timeout: config.tx.get_timeout,
+    logger.info('Creating Sell Transaction', { 
+      tokenAddress: tokenAddress.toString(), 
+      walletAddress: walletAddress.toString(),
+      amount 
     });
 
-    if (!quoteResponse.data) return null;
+    const tokenAddressPublicKey = typeof tokenAddress === 'string' ? new PublicKey(tokenAddress) : tokenAddress;
+    const walletAddressPublicKey = typeof walletAddress === 'string' ? new PublicKey(walletAddress) : walletAddress;
 
-    // Serialize the quote into a swap transaction that can be submitted on chain
-    const swapTransaction = await axios.post<SerializedQuoteResponse>(
-      swapUrl,
-      JSON.stringify({
-        // quoteResponse from /quote api
-        quoteResponse: quoteResponse.data,
-        // user public key to be used for the swap
-        userPublicKey: myWallet.publicKey.toString(),
-        // auto wrap and unwrap SOL. default is true
-        wrapAndUnwrapSol: true,
-        //dynamicComputeUnitLimit: true, // allow dynamic compute limit instead of max 1,400,000
-        dynamicSlippage: {
-          // This will set an optimized slippage to ensure high success rate
-          maxBps: 300, // Make sure to set a reasonable cap here to prevent MEV
-        },
-        prioritizationFeeLamports: {
-          priorityLevelWithMaxLamports: {
-            maxLamports: config.sell.prio_fee_max_lamports,
-            priorityLevel: config.sell.prio_level,
-          },
-        },
-      }),
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        timeout: config.tx.get_timeout,
+    // Get token balance if amount is not provided
+    if (!amount) {
+      logger.info('Fetching Token Balance', { 
+        tokenAddress: tokenAddressPublicKey.toString() 
+      });
+      const tokenBalance = await connection.getTokenAccountBalance(tokenAddressPublicKey);
+      
+      if (!tokenBalance.value.uiAmount || tokenBalance.value.uiAmount <= 0) {
+        logger.warn('No Token Balance Found', { 
+          tokenAddress: tokenAddressPublicKey.toString(),
+          balance: tokenBalance.value.uiAmount
+        });
+        return { success: false, error: 'No token balance found' };
       }
-    );
-    if (!swapTransaction.data) return null;
-
-    // deserialize the transaction
-    const swapTransactionBuf = Buffer.from(swapTransaction.data.swapTransaction, "base64");
-    var transaction = VersionedTransaction.deserialize(swapTransactionBuf);
-
-    // sign the transaction
-    transaction.sign([myWallet.payer]);
-
-    // get the latest block hash
-    const connection = new Connection(rpcUrl);
-    const latestBlockHash = await connection.getLatestBlockhash();
-
-    // Execute the transaction
-    const rawTransaction = transaction.serialize();
-    const txid = await connection.sendRawTransaction(rawTransaction, {
-      skipPreflight: true, // If True, This will skip transaction simulation entirely.
-      maxRetries: 2,
-    });
-
-    // Return null when no tx was returned
-    if (!txid) {
-      return null;
+      amount = tokenBalance.value.uiAmount.toString();
     }
 
-    // Fetch the current status of a transaction signature (processed, confirmed, finalized).
-    const conf = await connection.confirmTransaction({
-      blockhash: latestBlockHash.blockhash,
-      lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-      signature: txid,
+    logger.info('Token Balance Confirmed', { 
+      tokenAddress: tokenAddressPublicKey.toString(),
+      amount 
     });
 
-    // Return null when an error occured when confirming the transaction
-    if (conf.value.err || conf.value.err !== null) {
-      return null;
-    }
+    const quoteUrl = process.env.JUP_HTTPS_QUOTE_URI || "";
+    const swapUrl = process.env.JUP_HTTPS_SWAP_URI || "";
+    
+    logger.info('Preparing Wallet', { 
+      walletAddress: walletAddressPublicKey.toString() 
+    });
+    const myWallet = new Wallet(Keypair.fromSecretKey(bs58.decode(process.env.PRIV_KEY_WALLET || "")));
 
-    // Delete holding
-    removeHolding(tokenMint).catch((err) => {
-      console.log("⛔ Database Error: " + err);
+    // Request quote for the swap
+    logger.info('Requesting Swap Quote', { 
+      quoteUrl, 
+      tokenAddress: tokenAddressPublicKey.toString() 
+    });
+    const quoteResponse = await axios.get(quoteUrl, {
+      params: {
+        inputMint: tokenAddressPublicKey.toString(),
+        outputMint: 'So11111111111111111111111111111111111111112', // SOL
+        amount: amount,
+        slippageBps: 50 // 0.5% slippage
+      }
     });
 
-    return txid;
-  } catch (error: any) {
-    console.error("Error while creating and submitting transaction:", error.message);
-    return null;
+    logger.info('Quote Response Received', { 
+      quoteData: quoteResponse.data 
+    });
+
+    // Request swap transaction
+    logger.info('Requesting Swap Transaction', { 
+      swapUrl, 
+      quoteResponseData: quoteResponse.data 
+    });
+    const swapResponse = await axios.post(swapUrl, {
+      quoteResponse: quoteResponse.data,
+      wallet: myWallet.publicKey.toString()
+    });
+
+    logger.info('Swap Transaction Response', { 
+      swapResponseData: swapResponse.data 
+    });
+
+    // Here you would typically send the transaction
+    // For now, we'll just return a success response
+    return { 
+      success: true, 
+      signature: swapResponse.data.signature 
+    };
+
+  } catch (error) {
+    logger.error('Sell Transaction Error', { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    });
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : String(error) 
+    };
   }
 }

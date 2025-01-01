@@ -235,7 +235,7 @@ const SettingsForm: React.FC = () => {
           onChange={(newSettings) => setSettings({ ...settings, rugCheck: newSettings })}
         />
       </Accordion>
-      <button onClick={handleSave}>Save Settings</button>
+      <button className="save-settings-button" onClick={handleSave}>Save Settings</button>
     </div>
   );
 };

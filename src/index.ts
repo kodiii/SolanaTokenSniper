@@ -4,13 +4,66 @@ import { WebSocketRequest } from "./types"; // Typescript Types for type safety
 import { config } from "./config"; // Configuration parameters for our bot
 import { fetchTransactionDetails, createSwapTransaction, getRugCheckConfirmed, fetchAndSaveSwapDetails } from "./transactions";
 import { app, port } from './server';
+import winston from 'winston';
+import path from 'path';
+
+// Configure Winston logger with absolute file paths
+const logger = winston.createLogger({
+  level: 'debug', // Changed to debug to capture more logs
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.File({ 
+      filename: path.resolve(process.cwd(), 'error.log'), 
+      level: 'error' 
+    }),
+    new winston.transports.File({ 
+      filename: path.resolve(process.cwd(), 'combined.log') 
+    }),
+    new winston.transports.Console({ 
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      )
+    })
+  ]
+});
+
+// Global error handling
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception', { 
+    error: error.message, 
+    stack: error.stack 
+  });
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection', { 
+    reason: reason instanceof Error ? reason.message : String(reason),
+    promise: promise.toString()
+  });
+});
 
 // Load environment variables from the .env file
 dotenv.config();
 
+// Log startup information
+logger.info('Application Startup', {
+  environment: process.env.NODE_ENV || 'development',
+  pid: process.pid,
+  platform: process.platform,
+  nodeVersion: process.version
+});
+
 // Start the HTTP server
 app.listen(port, () => {
-  console.log(`🚀 HTTP Server running on port ${port}`);
+  logger.info(`HTTP Server running on port ${port}`, {
+    port,
+    wsUri: process.env.HELIUS_WSS_URI
+  });
 });
 
 // Function used to open our websocket connection
@@ -38,13 +91,20 @@ async function websocketHandler(): Promise<void> {
   let transactionOngoing = false;
   if (!init) console.clear();
 
-  // @TODO, test with hosting our app on a Cloud instance closer to the RPC nodes physical location for minimal latency
-  // @TODO, test with different RPC and API nodes (free and paid) from quicknode and shyft to test speed
-
   // Send subscription to the websocket once the connection is open
   ws.on("open", () => {
-    if (ws) sendRequest(ws); // Send a request once the WebSocket is open
-    console.log("\n🔓 WebSocket is open and listening.");
+    if (ws) {
+      try {
+        sendRequest(ws); // Send a request once the WebSocket is open
+        logger.info('WebSocket is open and listening', { 
+          wsUri: process.env.HELIUS_WSS_URI 
+        });
+      } catch (error) {
+        logger.error('Error sending WebSocket request', { 
+          error: error instanceof Error ? error.message : String(error) 
+        });
+      }
+    }
     init = true;
   });
 
@@ -53,6 +113,10 @@ async function websocketHandler(): Promise<void> {
     try {
       const jsonString = data.toString(); // Convert data to a string
       const parsedData = JSON.parse(jsonString); // Parse the JSON string
+
+      logger.debug('WebSocket message received', { 
+        parsedData 
+      });
 
       // Safely access the nested structure
       const logs = parsedData?.params?.result?.value?.logs;
@@ -68,78 +132,94 @@ async function websocketHandler(): Promise<void> {
         transactionOngoing = true;
         if (ws) ws.close(1000, "Handing transactions.");
 
-        // Output logs
-        console.log("==========================================");
-        console.log("🔎 New Liquidity Pool found.");
-        console.log("🔐 Pause Websocket to handle transaction.");
+        logger.info('New Liquidity Pool found', { 
+          signature, 
+          logs 
+        });
 
         // Fetch the transaction details
-        console.log("🔃 Fetching transaction details ...");
+        logger.info('Fetching transaction details');
         const data = await fetchTransactionDetails(signature);
 
         // Abort and restart socket
         if (!data) {
-          console.log("⛔ Transaction aborted. No transaction data returned.");
-          console.log("==========================================");
+          logger.warn('Transaction aborted. No transaction data returned');
           return websocketHandler();
         }
 
         // Ensure required data is available
-        if (!data.solMint || !data.tokenMint) return;
+        if (!data.solMint || !data.tokenMint) {
+          logger.warn('Missing solMint or tokenMint', { 
+            solMint: data.solMint, 
+            tokenMint: data.tokenMint 
+          });
+          return websocketHandler();
+        }
 
         // Check rug check
         const isRugCheckPassed = await getRugCheckConfirmed(data.tokenMint);
         if (!isRugCheckPassed) {
-          console.log("🚫 Rug Check not passed! Transaction aborted.");
-          console.log("==========================================");
+          logger.warn('Rug Check not passed', { 
+            tokenMint: data.tokenMint 
+          });
           return websocketHandler();
         }
 
         // Handle ignored tokens
         if (data.tokenMint.trim().toLowerCase().endsWith("pump") && config.liquidity_pool.ignore_pump_fun) {
-          // Check if ignored
-          console.log("🚫 Transaction skipped. Ignoring Pump.fun.");
-          console.log("==========================================");
+          logger.info('Skipping Pump.fun token', { 
+            tokenMint: data.tokenMint 
+          });
           return websocketHandler();
         }
 
-        console.log("💰 Token found: https://gmgn.ai/sol/token/" + data.tokenMint);
+        logger.info('Token found', { 
+          tokenMint: data.tokenMint,
+          tokenUrl: `https://gmgn.ai/sol/token/${data.tokenMint}`
+        });
+
         const tx = await createSwapTransaction(data.solMint, data.tokenMint);
 
         // Abort and restart socket
         if (!tx) {
-          console.log("⛔Transaction aborted. No valid transaction id returned.");
+          logger.warn('Transaction aborted. No valid transaction id returned');
           return websocketHandler();
         }
 
-        console.log("✅ Swap quote recieved.");
-        console.log("🚀 Swapping SOL for Token.");
-        console.log("Swap Transaction: ", "https://solscan.io/tx/" + tx);
+        logger.info('Swap quote received', { 
+          transaction: `https://solscan.io/tx/${tx}` 
+        });
 
         // Fetch and store the transaction for tracking purposes
         const saveConfirmation = await fetchAndSaveSwapDetails(tx);
         if (!saveConfirmation) {
-          console.log("❌ Warning: Transaction not saved for tracking! Track Manually!");
+          logger.warn('Transaction not saved for tracking');
         }
 
         //Start Websocket to listen for new tokens
         return websocketHandler();
       }
     } catch (error) {
-      console.error("Error parsing JSON or processing data:", error);
+      logger.error('Error parsing JSON or processing data', { 
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : 'No stack trace'
+      });
     }
   });
 
   // Handle WebSocket errors
   ws.on("error", (error: Error) => {
-    console.error("WebSocket error:", error);
+    logger.error('WebSocket error', { 
+      error: error.message,
+      stack: error.stack
+    });
     ws = null;
     setTimeout(websocketHandler, 5000);
   });
 
   // Handle WebSocket closure
   ws.on("close", () => {
-    console.log("\n🔒 WebSocket is closed. Restarting in 5 seconds...");
+    logger.info('WebSocket is closed. Restarting in 5 seconds');
     ws = null;
     setTimeout(websocketHandler, 5000);
   });

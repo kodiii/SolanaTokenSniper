@@ -7,6 +7,7 @@ import { createTableHoldings } from "./db";
 import { HoldingRecord } from "../types";
 import { DateTime } from "luxon";
 import { createSellTransaction } from "../transactions";
+import { Connection } from "@solana/web3.js";
 
 // Load environment variables from the .env file
 dotenv.config();
@@ -95,7 +96,8 @@ async function main() {
           if (config.sell.auto_sell && config.sell.auto_sell === true) {
             const amountIn = tokenBalance.toString().replace(".", "");
             if (unrealizedPnLPercentage >= config.sell.take_profit_percent) {
-              const tx = await createSellTransaction(config.liquidity_pool.wsol_pc_mint, token, amountIn);
+              const connection = new Connection(process.env.HELIUS_HTTPS_URI || "");
+              const tx = await createSellTransaction(holding.Token, holding.WalletAddress, connection, config);
               if (!tx) {
                 sltpMessage = "⛔ Could not take profit. Trying again in 5 seconds.";
               }
@@ -104,7 +106,8 @@ async function main() {
               }
             }
             if (unrealizedPnLPercentage <= -config.sell.stop_loss_percent) {
-              const tx = await createSellTransaction(config.liquidity_pool.wsol_pc_mint, token, amountIn);
+              const connection = new Connection(process.env.HELIUS_HTTPS_URI || "");
+              const tx = await createSellTransaction(holding.Token, holding.WalletAddress, connection, config);
               if (!tx) {
                 sltpMessage = "⛔ Could not sell stop loss. Trying again in 5 seconds.";
               }

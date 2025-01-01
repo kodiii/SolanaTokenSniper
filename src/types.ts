@@ -224,6 +224,7 @@ export interface HoldingRecord {
   PerTokenPaidUSDC: number;
   Slot: number;
   Program: string;
+  WalletAddress: string;
 }
 
 export interface HoldingMetadata {

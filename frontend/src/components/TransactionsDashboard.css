@@ -1,0 +1,80 @@
+.transactions-dashboard {
+  padding: 20px;
+  background: #1a1a1a;
+  border-radius: 8px;
+}
+
+.transactions-dashboard h3 {
+  color: #ffffff;
+  margin-bottom: 20px;
+}
+
+.transactions-dashboard table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.transactions-dashboard th,
+.transactions-dashboard td {
+  padding: 12px;
+  text-align: left;
+  color: #ffffff;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.transactions-dashboard th {
+  background-color: #2a2a2a;
+  font-weight: bold;
+}
+
+.transactions-dashboard tr:hover {
+  background-color: #2a2a2a;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.status-badge.open {
+  background: #4CAF50;
+  color: white;
+}
+
+.status-badge.closed {
+  background: #9e9e9e;
+  color: white;
+}
+
+.positive {
+  color: #4CAF50;
+}
+
+.negative {
+  color: #f44336;
+}
+
+.sell-button {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.sell-button:hover {
+  background: #d32f2f;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #ffffff;
+}

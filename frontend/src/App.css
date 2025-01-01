@@ -1,57 +1,89 @@
 .app {
-  width: 100%;
-  min-height: 100vh;
-  background-color: #242424;
-  padding: 0.5rem;
+  background-color: #121212;
+  color: white;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
-.main-layout {
-  display: grid;
-  gap: 0.5rem;
-  max-width: 1600px;
-  margin: 0 auto;
+.app-content {
+  display: flex;
+  gap: 20px;
   height: 100%;
 }
 
-@media (min-width: 768px) {
-  .main-layout {
-    grid-template-columns: 1fr 1fr;
-  }
+.main-content {
+  flex: 1;
+  min-width: 0; /* Prevent flex item from overflowing */
+}
+
+.main-layout {
+  display: flex;
+  gap: 20px;
+  height: 100%;
+  max-width: 1800px;
+  margin: 0 auto;
 }
 
 .left-column {
+  flex: 1;
+  min-width: 400px;
+  max-width: 600px;
   background: #1e1e1e;
   padding: 2rem;
   border-radius: 12px;
-  height: fit-content;
-  min-height: calc(100vh - 4rem);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .right-column {
+  flex: 2;
+  min-width: 600px;
   background: #1e1e1e;
   padding: 2rem;
   border-radius: 12px;
-  height: fit-content;
-  min-height: calc(100vh - 4rem);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.side-panel {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .tab-buttons {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 10px;
+  margin-bottom: 20px;
+  margin-top: 20px;
 }
 
 .tab-buttons button {
-  background: #333;
+  padding: 10px 20px;
+  background: #2d2d2d;
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
+  border-radius: 6px;
   color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.tab-buttons button:hover {
+  background: #3d3d3d;
 }
 
 .tab-buttons button.active {
-  background: #646cff;
+  background: #4d4d4d;
+}
+
+.tab-content {
+  flex: 1;
+  overflow: auto;
+  background: #2d2d2d;
+  border-radius: 8px;
+  padding: 20px;
 }
 
 .transactions-dashboard table {
