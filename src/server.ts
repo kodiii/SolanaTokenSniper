@@ -4,6 +4,8 @@ import { sellToken } from './api/sellToken';
 import { getTransactions } from './api/getTransactions';
 import { getLogs } from './api/getLogs';
 import { startBot, stopBot, getBotStatus } from './api/botControl';
+import { getConfig } from './api/getConfig';
+import { updateConfig } from './api/updateConfig';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -27,33 +29,29 @@ app.use((req, res, next) => {
   next();
 });
 
-// Error handling middleware
+// API routes
+app.post('/api/sell-token', sellToken);
+app.get('/api/transactions', getTransactions);
+app.get('/api/logs', getLogs);
+app.get('/api/bot/status', getBotStatus);
+app.post('/api/bot/start', startBot);
+app.post('/api/bot/stop', stopBot);
+app.get('/api/config', getConfig);
+app.post('/api/update-config', updateConfig);
+app.use('/api', updateEnvRouter);
+
+// Health check endpoint
+app.get('/api/health', (req: express.Request, res: express.Response) => {
+  res.json({ status: 'ok' });
+});
+
+// Error handling middleware - should be last
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Error:', err);
   res.status(500).json({
     message: 'Internal Server Error',
     error: err.message
   });
-});
-
-// Create router for API routes
-const apiRouter = express.Router();
-
-// API routes
-apiRouter.use('/', updateEnvRouter);
-apiRouter.post('/sell-token', sellToken);
-apiRouter.get('/transactions', getTransactions);
-apiRouter.get('/logs', getLogs);
-apiRouter.get('/bot/status', getBotStatus);
-apiRouter.post('/bot/start', startBot);
-apiRouter.post('/bot/stop', stopBot);
-
-// Mount API router
-app.use('/api', apiRouter);
-
-// Health check endpoint
-app.get('/api/health', (req: express.Request, res: express.Response) => {
-  res.json({ status: 'ok' });
 });
 
 // Log registered routes
@@ -63,5 +61,5 @@ app._router.stack.forEach((r: any) => {
   }
 });
 
-// Export the app and port
+// Export the app and port (without starting the server)
 export { app, port };

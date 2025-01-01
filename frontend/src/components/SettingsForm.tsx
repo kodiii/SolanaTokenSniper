@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PublicKey } from '@solana/web3.js';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import Accordion from './Accordion';
@@ -94,8 +94,27 @@ const SettingsForm: React.FC = () => {
     },
   });
 
+  // Fetch initial config from backend
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const response = await fetch('http://localhost:45678/api/config');
+        if (!response.ok) {
+          throw new Error('Failed to fetch config');
+        }
+        const config = await response.json();
+        setSettings(config);
+      } catch (error) {
+        console.error('Error fetching config:', error);
+      }
+    };
+
+    fetchConfig();
+  }, []);
+
   const handleSave = async () => {
     try {
+      // First update the .env file
       const envContent = `
         ${privateKey ? `PRIV_KEY_WALLET="${privateKey}"` : `WALLET_PUBLIC_KEY="${walletPublicKey}"`}
         HELIUS_HTTPS_URI="${mainRpc}"
@@ -107,7 +126,7 @@ const SettingsForm: React.FC = () => {
       `.trim();
 
       console.log('Sending request to update .env file...');
-      const response = await fetch('/api/update-env', {
+      const envResponse = await fetch('http://localhost:45678/api/update-env', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -115,13 +134,26 @@ const SettingsForm: React.FC = () => {
         body: JSON.stringify({ content: envContent }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!envResponse.ok) {
+        const errorData = await envResponse.json();
         throw new Error(errorData.message || 'Failed to update .env file');
       }
 
-      const data = await response.json();
-      console.log('Settings saved successfully:', data.message);
+      // Then update the config file
+      const configResponse = await fetch('http://localhost:45678/api/update-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings),
+      });
+
+      if (!configResponse.ok) {
+        const errorData = await configResponse.json();
+        throw new Error(errorData.message || 'Failed to update config');
+      }
+
+      console.log('Settings saved successfully');
     } catch (error) {
       console.error('Error saving settings:', error);
       alert(`Failed to save settings: ${error instanceof Error ? error.message : 'Unknown error'}`);
