@@ -1,10 +1,15 @@
 import { Request, Response } from 'express';
 import { config } from '../config';
+import { FrontendConfig, RugCheckConfig } from '../types';
 
 export const getConfig = async (req: Request, res: Response) => {
   try {
+    // Get the current rug check provider and its config
+    const rugCheckConfig = config.rug_check as unknown as RugCheckConfig;
+    const currentProvider = rugCheckConfig.provider;
+
     // Convert config to frontend format
-    const frontendConfig = {
+    const frontendConfig: FrontendConfig = {
       liquidityPool: {
         ignorePumpFun: config.liquidity_pool.ignore_pump_fun,
         radiyumProgramId: config.liquidity_pool.radiyum_program_id,
@@ -35,10 +40,22 @@ export const getConfig = async (req: Request, res: Response) => {
         trackPublicWallet: config.sell.track_public_wallet,
       },
       rugCheck: {
-        verboseLog: config.rug_check.verbose_log,
-        singleHolderOwnership: config.rug_check.single_holder_ownership,
-        lowLiquidity: config.rug_check.low_liquidity,
-        notAllowed: config.rug_check.not_allowed,
+        provider: currentProvider,
+        verboseLog: currentProvider === 'rugcheck_xyz' 
+          ? rugCheckConfig.rugcheck_xyz.verbose_log 
+          : rugCheckConfig.helius.verbose_log,
+        singleHolderOwnership: currentProvider === 'rugcheck_xyz' 
+          ? rugCheckConfig.rugcheck_xyz.single_holder_ownership 
+          : rugCheckConfig.helius.max_single_holder_percentage,
+        lowLiquidity: currentProvider === 'rugcheck_xyz' 
+          ? rugCheckConfig.rugcheck_xyz.low_liquidity 
+          : rugCheckConfig.helius.min_liquidity_sol,
+        notAllowed: currentProvider === 'rugcheck_xyz' 
+          ? rugCheckConfig.rugcheck_xyz.not_allowed 
+          : [
+            rugCheckConfig.helius.permissions.allow_freeze_authority ? '' : 'Freeze Authority still enabled',
+            rugCheckConfig.helius.permissions.allow_mint_authority ? '' : 'Mint Authority still enabled'
+          ].filter(Boolean),
       },
     };
 

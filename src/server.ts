@@ -6,6 +6,7 @@ import { getLogs } from './api/getLogs';
 import { startBot, stopBot, getBotStatus } from './api/botControl';
 import { getConfig } from './api/getConfig';
 import { updateConfig } from './api/updateConfig';
+import { testConnection } from './api/testConnection';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -38,6 +39,7 @@ app.post('/api/bot/start', startBot);
 app.post('/api/bot/stop', stopBot);
 app.get('/api/config', getConfig);
 app.post('/api/update-config', updateConfig);
+app.post('/api/test-connection', testConnection);
 app.use('/api', updateEnvRouter);
 
 // Health check endpoint

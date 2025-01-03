@@ -11,40 +11,71 @@ import { Web3Wallet } from './Web3Wallet';
 import './SettingsForm.css';
 
 interface Settings {
-  liquidityPool: {
-    ignorePumpFun: boolean;
-    radiyumProgramId: string;
-    wsolPcMint: string;
+  liquidity_pool: {
+    ignore_pump_fun: boolean;
+    radiyum_program_id: string;
+    wsol_pc_mint: string;
   };
-  transaction: {
-    getRetryInterval: number;
-    getRetryTimeout: number;
-    getTimeout: number;
+  tx: {
+    get_retry_interval: number;
+    get_retry_timeout: number;
+    get_timeout: number;
   };
   swap: {
-    verboseLog: boolean;
-    prioFeeMaxLamports: number;
-    prioLevel: string;
+    verbose_log: boolean;
+    prio_fee_max_lamports: number;
+    prio_level: string;
     amount: string;
-    slippageBps: string;
-    dbNameTrackerHoldings: string;
-    tokenNotTradable400ErrorRetries: number;
-    tokenNotTradable400ErrorDelay: number;
+    slippage_bps: string;
+    db_name_tracker_holdings: string;
+    token_not_tradable_400_error_retries: number;
+    token_not_tradable_400_error_delay: number;
   };
   sell: {
-    prioFeeMaxLamports: number;
-    prioLevel: string;
-    slippageBps: string;
-    autoSell: boolean;
-    stopLossPercent: number;
-    takeProfitPercent: number;
-    trackPublicWallet: string;
+    prio_fee_max_lamports: number;
+    prio_level: string;
+    slippage_bps: string;
+    auto_sell: boolean;
+    stop_loss_percent: number;
+    take_profit_percent: number;
+    track_public_wallet: string;
   };
-  rugCheck: {
-    verboseLog: boolean;
-    singleHolderOwnership: number;
-    lowLiquidity: number;
-    notAllowed: string[];
+  rug_check: {
+    provider: 'helius' | 'rugcheck.xyz';
+    rugcheck_xyz: {
+      verbose_log: boolean;
+      single_holder_ownership: number;
+      low_liquidity: number;
+      not_allowed: string[];
+    };
+    helius: {
+      verbose_log: boolean;
+      token_age_min_days: number;
+      min_liquidity_sol: number;
+      min_holders: number;
+      max_single_holder_percentage: number;
+      required_dexes: string[];
+      min_dexes_with_liquidity: number;
+      creator_checks: {
+        min_creator_account_age_days: number;
+        check_creator_other_tokens: boolean;
+        max_failed_tokens_by_creator: number;
+      };
+      permissions: {
+        allow_freeze_authority: boolean;
+        allow_mint_authority: boolean;
+      };
+      trading_pattern: {
+        min_successful_swaps: number;
+        max_failed_swaps_percentage: number;
+        min_unique_holders_traded: number;
+      };
+      simulation: {
+        enabled: boolean;
+        min_success_rate: number;
+        max_price_impact_percentage: number;
+      };
+    };
   };
 }
 
@@ -57,53 +88,100 @@ const SettingsForm: React.FC = () => {
   const [transactionRpc, setTransactionRpc] = useState('https://api.helius.xyz/v0/transactions/?api-key=');
   
   const [settings, setSettings] = useState<Settings>({
-    liquidityPool: {
-      ignorePumpFun: false,
-      radiyumProgramId: "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
-      wsolPcMint: "So11111111111111111111111111111111111111112",
+    liquidity_pool: {
+      ignore_pump_fun: false,
+      radiyum_program_id: "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
+      wsol_pc_mint: "So11111111111111111111111111111111111111112"
     },
-    transaction: {
-      getRetryInterval: 750,
-      getRetryTimeout: 20000,
-      getTimeout: 10000,
+    tx: {
+      get_retry_interval: 750,
+      get_retry_timeout: 20000,
+      get_timeout: 10000
     },
     swap: {
-      verboseLog: false,
-      prioFeeMaxLamports: 1000000,
-      prioLevel: "veryHigh",
+      verbose_log: true,
+      prio_fee_max_lamports: 1000000,
+      prio_level: "veryHigh",
       amount: "10000000",
-      slippageBps: "200",
-      dbNameTrackerHoldings: "src/tracker/holdings.db",
-      tokenNotTradable400ErrorRetries: 5,
-      tokenNotTradable400ErrorDelay: 2000,
+      slippage_bps: "200",
+      db_name_tracker_holdings: "src/tracker/holdings.db",
+      token_not_tradable_400_error_retries: 5,
+      token_not_tradable_400_error_delay: 2000
     },
     sell: {
-      prioFeeMaxLamports: 1000000,
-      prioLevel: "veryHigh",
-      slippageBps: "200",
-      autoSell: false,
-      stopLossPercent: 100,
-      takeProfitPercent: 20,
-      trackPublicWallet: "",
+      prio_fee_max_lamports: 1000000,
+      prio_level: "veryHigh",
+      slippage_bps: "200",
+      auto_sell: true,
+      stop_loss_percent: 2,
+      take_profit_percent: 10,
+      track_public_wallet: ""
     },
-    rugCheck: {
-      verboseLog: false,
-      singleHolderOwnership: 30,
-      lowLiquidity: 1000,
-      notAllowed: ["Freeze Authority still enabled", "Copycat token"],
-    },
+    rug_check: {
+      provider: 'rugcheck.xyz',
+      rugcheck_xyz: {
+        verbose_log: true,
+        single_holder_ownership: 30,
+        low_liquidity: 1000,
+        not_allowed: ["Freeze Authority still enabled", "Copycat token"],
+      },
+      helius: {
+        verbose_log: true,
+        token_age_min_days: 0.000347, // 30 seconds in days (30 / (24 * 60 * 60))
+        min_liquidity_sol: 10,
+        min_holders: 50,
+        max_single_holder_percentage: 30,
+        required_dexes: ["raydium", "orca"],
+        min_dexes_with_liquidity: 1,
+        creator_checks: {
+          min_creator_account_age_days: 30,
+          check_creator_other_tokens: true,
+          max_failed_tokens_by_creator: 3
+        },
+        permissions: {
+          allow_freeze_authority: false,
+          allow_mint_authority: false
+        },
+        trading_pattern: {
+          min_successful_swaps: 5,
+          max_failed_swaps_percentage: 20,
+          min_unique_holders_traded: 10
+        },
+        simulation: {
+          enabled: true,
+          min_success_rate: 90,
+          max_price_impact_percentage: 5
+        }
+      }
+    }
   });
 
-  // Fetch initial config from backend
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState<'success' | 'error'>('success');
+
+  // Fetch initial config from backend or localStorage
   useEffect(() => {
     const fetchConfig = async () => {
       try {
+        // First, try to get config from localStorage
+        const storedSettings = localStorage.getItem('tokenSniperSettings');
+        if (storedSettings) {
+          const parsedSettings = JSON.parse(storedSettings);
+          setSettings(parsedSettings);
+          return;
+        }
+
+        // If no localStorage settings, fetch from backend
         const response = await fetch('http://localhost:45678/api/config');
         if (!response.ok) {
           throw new Error('Failed to fetch config');
         }
         const config = await response.json();
         setSettings(config);
+        
+        // Save fetched config to localStorage
+        localStorage.setItem('tokenSniperSettings', JSON.stringify(config));
       } catch (error) {
         console.error('Error fetching config:', error);
       }
@@ -153,10 +231,35 @@ const SettingsForm: React.FC = () => {
         throw new Error(errorData.message || 'Failed to update config');
       }
 
-      console.log('Settings saved successfully');
+      // Test the WebSocket connection
+      const testResponse = await fetch('http://localhost:45678/api/test-connection', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ settings }) // Send settings to validate connection
+      });
+
+      if (!testResponse.ok) {
+        throw new Error('Failed to test connection');
+      }
+
+      const testResult = await testResponse.json();
+      
+      if (testResult.success) {
+        setModalType('success');
+        setModalMessage('Settings saved successfully and WebSocket connection established!');
+      } else {
+        setModalType('error');
+        setModalMessage(`Settings saved but WebSocket connection failed: ${testResult.error}`);
+      }
+      
+      setShowModal(true);
     } catch (error) {
       console.error('Error saving settings:', error);
-      alert(`Failed to save settings: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setModalType('error');
+      setModalMessage(`Failed to save settings: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setShowModal(true);
     }
   };
 
@@ -235,39 +338,66 @@ const SettingsForm: React.FC = () => {
 
       <Accordion title="Liquidity Pool Settings">
         <LiquidityPoolSettings 
-          settings={settings.liquidityPool} 
-          onChange={(newSettings) => setSettings({ ...settings, liquidityPool: newSettings })}
+          settings={settings.liquidity_pool} 
+          onChange={(newSettings) => setSettings(prev => ({
+            ...prev,
+            liquidity_pool: newSettings
+          }))}
         />
       </Accordion>
 
       <Accordion title="Transaction Settings">
         <TransactionSettings 
-          settings={settings.transaction} 
-          onChange={(newSettings) => setSettings({ ...settings, transaction: newSettings })}
+          settings={settings.tx} 
+          onChange={(newSettings) => setSettings(prev => ({
+            ...prev,
+            tx: newSettings
+          }))}
         />
       </Accordion>
 
       <Accordion title="Swap Settings">
         <SwapSettings 
           settings={settings.swap} 
-          onChange={(newSettings) => setSettings({ ...settings, swap: newSettings })}
+          onChange={(newSettings) => setSettings(prev => ({
+            ...prev,
+            swap: newSettings
+          }))}
         />
       </Accordion>
 
       <Accordion title="Sell Settings">
         <SellSettings 
           settings={settings.sell} 
-          onChange={(newSettings) => setSettings({ ...settings, sell: newSettings })}
+          onChange={(newSettings) => setSettings(prev => ({
+            ...prev,
+            sell: newSettings
+          }))}
         />
       </Accordion>
 
       <Accordion title="Rug Check Settings">
         <RugCheckSettings 
-          settings={settings.rugCheck} 
-          onChange={(newSettings) => setSettings({ ...settings, rugCheck: newSettings })}
+          settings={settings.rug_check}
+          onUpdate={(newSettings) => setSettings(prev => ({
+            ...prev,
+            rug_check: newSettings
+          }))}
         />
       </Accordion>
       <button className="save-settings-button" onClick={handleSave}>Save Settings</button>
+      
+      {showModal && (
+        <div className="modal-overlay">
+          <div className={`modal ${modalType}`}>
+            <div className="modal-content">
+              <h2>{modalType === 'success' ? 'Success!' : 'Error'}</h2>
+              <p>{modalMessage}</p>
+              <button onClick={() => setShowModal(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

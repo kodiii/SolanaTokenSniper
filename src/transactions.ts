@@ -13,9 +13,17 @@ import {
   SwapEventDetailsResponse,
   HoldingRecord,
   HoldingMetadata,
+  RugCheckResult,
+  HeliusAssetResponse,
+  HeliusLiquidityResponse,
+  HeliusCreatorResponse,
+  HeliusTradeHistoryResponse,
+  HeliusSimulationResponse,
+  RugCheckConfig
 } from "./types";
 import { insertHolding, removeHolding } from "./tracker/db";
 import winston from 'winston';
+import { formatTimeDuration } from './utils/timeFormat';
 
 // Configure Winston logger
 const logger = winston.createLogger({
@@ -33,6 +41,8 @@ const logger = winston.createLogger({
 
 // Load environment variables from the .env file
 dotenv.config();
+
+const rugCheckConfig = config.rug_check as unknown as RugCheckConfig;
 
 export async function fetchTransactionDetails(signature: string): Promise<DisplayDataItem | null> {
   const API_URL = process.env.HELIUS_HTTPS_URI_TX || "";
@@ -288,43 +298,408 @@ export async function createSwapTransaction(solMint: string, tokenMint: string):
   }
 }
 
-export async function getRugCheckConfirmed(tokenMint: string): Promise<boolean> {
-  const rugResponse = await axios.get<RugResponse>("https://api.rugcheck.xyz/v1/tokens/" + tokenMint + "/report/summary", {
-    timeout: config.tx.get_timeout,
-  });
+export async function getRugCheckXYZ(tokenMint: string): Promise<RugCheckResult> {
+  try {
+    const rugResponse = await axios.get<RugResponse>("https://api.rugcheck.xyz/v1/tokens/" + tokenMint + "/report/summary", {
+      timeout: config.tx.get_timeout,
+    });
 
-  if (!rugResponse.data) return false;
+    if (!rugResponse.data) {
+      return {
+        provider: 'rugcheck.xyz',
+        success: false,
+        details: { risks: [] },
+        warnings: [],
+        errors: ['No response from RugCheck.xyz']
+      };
+    }
 
-  if (config.rug_check.verbose_log && config.rug_check.verbose_log === true) {
-    console.log(rugResponse.data);
-  }
+    if (rugCheckConfig.rugcheck_xyz.verbose_log) {
+      console.log(rugResponse.data);
+    }
 
-  // Check if a single user holds more than 30 %
-  for (const risk of rugResponse.data.risks) {
-    if (risk.name === "Single holder ownership") {
-      const numericValue = parseFloat(risk.value.replace("%", "")); // Convert percentage string to a number
-      if (numericValue > config.rug_check.single_holder_ownership) {
-        return false; // Return false immediately if value exceeds 30%
+    const warnings: string[] = [];
+    const errors: string[] = [];
+
+    // Check if a single user holds more than configured percentage
+    for (const risk of rugResponse.data.risks) {
+      if (risk.name === "Single holder ownership") {
+        const numericValue = parseFloat(risk.value.replace("%", ""));
+        if (numericValue > rugCheckConfig.rugcheck_xyz.single_holder_ownership) {
+          errors.push(`Single holder owns ${numericValue}% which is above threshold of ${rugCheckConfig.rugcheck_xyz.single_holder_ownership}%`);
+        }
+      }
+      if (risk.name === "Low Liquidity") {
+        const numericValue = parseFloat(risk.value.replace("%", ""));
+        if (numericValue > rugCheckConfig.rugcheck_xyz.low_liquidity) {
+          errors.push(`Liquidity is too low: ${numericValue}`);
+        }
+      }
+      
+      // Check for not allowed conditions
+      if (rugCheckConfig.rugcheck_xyz.not_allowed.includes(risk.name)) {
+        errors.push(`Not allowed condition found: ${risk.name}`);
       }
     }
-    if (risk.name === "Low Liquidity") {
-      const numericValue = parseFloat(risk.value.replace("%", ""));
-      if (numericValue > config.rug_check.low_liquidity) {
-        return false; // Return false immediately if value is smaller than 10000
-      }
-    }
-  }
 
-  // Check for valid liquidity and if not copy cat token.
-  function isRiskAcceptable(tokenDetails: RugResponse): boolean {
-    const notAllowed = config.rug_check.not_allowed;
-    return !tokenDetails.risks.some((risk) => notAllowed.includes(risk.name));
+    return {
+      provider: 'rugcheck.xyz',
+      success: errors.length === 0,
+      details: {
+        risks: rugResponse.data.risks
+      },
+      warnings,
+      errors
+    };
+  } catch (error) {
+    return {
+      provider: 'rugcheck.xyz',
+      success: false,
+      details: { risks: [] },
+      warnings: [],
+      errors: [(error as Error).message]
+    };
   }
-
-  return isRiskAcceptable(rugResponse.data);
 }
 
-export async function fetchAndSaveSwapDetails(tx: string): Promise<boolean> {
+export async function getRugCheckHelius(tokenMint: string): Promise<RugCheckResult> {
+  try {
+    const rpcUrl = process.env.HELIUS_HTTPS_URI || '';
+    const assetUrl = `${rpcUrl}/v0/token-metadata/${tokenMint}`;
+    const liquidityUrl = `${rpcUrl}/v0/token-liquidity/${tokenMint}`;
+    const creatorUrl = `${rpcUrl}/v0/token-creator/${tokenMint}`;
+    const tradeHistoryUrl = `${rpcUrl}/v0/token-trades/${tokenMint}`;
+    const simulationUrl = `${rpcUrl}/v0/token-simulation/${tokenMint}`;
+
+    // 1. Get Token Details
+    const assetResponse = await axios.get<HeliusAssetResponse>(
+      assetUrl,
+      {
+        headers: { 'Authorization': `Bearer ${process.env.HELIUS_API_KEY}` }
+      }
+    );
+
+    // 2. Check Token Age
+    const firstTx = assetResponse.data.events[0];
+    const tokenAge = (Date.now() - firstTx.timestamp * 1000) / (1000 * 60 * 60 * 24);
+
+    // Format warnings and errors
+    const warnings: string[] = [];
+    const errors: string[] = [];
+
+    // Add warning if token age is less than minimum
+    if (tokenAge < rugCheckConfig.helius.token_age_min_days) {
+      warnings.push(`Token age (${formatTimeDuration(tokenAge)}) is less than minimum required (${rugCheckConfig.helius.token_age_min_days} days)`);
+    }
+
+    // 3. Check Liquidity Across DEXes
+    const dexesWithLiquidity: string[] = [];
+    let totalLiquiditySol = 0;
+
+    for (const dex of rugCheckConfig.helius.required_dexes) {
+      const liquidityResponse = await axios.get<HeliusLiquidityResponse>(
+        `${liquidityUrl}/${dex}`,
+        {
+          headers: { 'Authorization': `Bearer ${process.env.HELIUS_API_KEY}` }
+        }
+      );
+
+      if (liquidityResponse.data.liquidity.tokenA.priceUsdc > 0) {
+        dexesWithLiquidity.push(dex);
+        totalLiquiditySol += parseFloat(liquidityResponse.data.liquidity.tokenA.amount);
+      }
+    }
+
+    if (dexesWithLiquidity.length < rugCheckConfig.helius.min_dexes_with_liquidity) {
+      errors.push(`Insufficient DEX liquidity. Found in ${dexesWithLiquidity.length} DEXes, minimum required: ${rugCheckConfig.helius.min_dexes_with_liquidity}`);
+    }
+
+    if (totalLiquiditySol < rugCheckConfig.helius.min_liquidity_sol) {
+      errors.push(`Total liquidity (${totalLiquiditySol} SOL) is below minimum (${rugCheckConfig.helius.min_liquidity_sol} SOL)`);
+    }
+
+    // 4. Check Creator History
+    const creator = assetResponse.data.content.creators[0]?.address;
+    if (creator) {
+      const creatorResponse = await axios.get<HeliusCreatorResponse>(
+        `${creatorUrl}/${creator}`,
+        {
+          headers: { 'Authorization': `Bearer ${process.env.HELIUS_API_KEY}` }
+        }
+      );
+
+      const creatorAgeInDays = (Date.now() - creatorResponse.data.createdAt) / (1000 * 60 * 60 * 24);
+      if (creatorAgeInDays < rugCheckConfig.helius.creator_checks.min_creator_account_age_days) {
+        warnings.push(`Creator account age (${formatTimeDuration(creatorAgeInDays)}) is below minimum (${rugCheckConfig.helius.creator_checks.min_creator_account_age_days} days)`);
+      }
+
+      if (creatorResponse.data.failedTokens > rugCheckConfig.helius.creator_checks.max_failed_tokens_by_creator) {
+        errors.push(`Creator has too many failed tokens (${creatorResponse.data.failedTokens})`);
+      }
+    }
+
+    // 5. Check Permissions
+    const hasFreezeAuthority = assetResponse.data.content.authorities.some(auth => 
+      auth.scopes.includes('freeze'));
+    const hasMintAuthority = assetResponse.data.content.authorities.some(auth => 
+      auth.scopes.includes('mint'));
+
+    if (hasFreezeAuthority && !rugCheckConfig.helius.permissions.allow_freeze_authority) {
+      errors.push('Token has freeze authority enabled');
+    }
+
+    if (hasMintAuthority && !rugCheckConfig.helius.permissions.allow_mint_authority) {
+      errors.push('Token has mint authority enabled');
+    }
+
+    // 6. Check Trading Pattern
+    const tradeHistoryResponse = await axios.get<HeliusTradeHistoryResponse>(
+      tradeHistoryUrl,
+      {
+        headers: { 'Authorization': `Bearer ${process.env.HELIUS_API_KEY}` }
+      }
+    );
+
+    if (tradeHistoryResponse.data.summary.successfulSwaps < rugCheckConfig.helius.trading_pattern.min_successful_swaps) {
+      warnings.push(`Low number of successful swaps (${tradeHistoryResponse.data.summary.successfulSwaps})`);
+    }
+
+    const failedSwapsPercentage = 
+      ((tradeHistoryResponse.data.summary.totalSwaps - tradeHistoryResponse.data.summary.successfulSwaps) / 
+      tradeHistoryResponse.data.summary.totalSwaps) * 100;
+
+    if (failedSwapsPercentage > rugCheckConfig.helius.trading_pattern.max_failed_swaps_percentage) {
+      errors.push(`High percentage of failed swaps (${failedSwapsPercentage.toFixed(2)}%)`);
+    }
+
+    // 7. Simulate Transaction (if enabled)
+    let simulationResults: {
+      success: boolean;
+      priceImpact: number;
+      error?: string;
+    } = {
+      success: true,
+      priceImpact: 0
+    };
+
+    if (rugCheckConfig.helius.simulation.enabled) {
+      const simulationResponse = await axios.post<HeliusSimulationResponse>(
+        simulationUrl,
+        {
+          transaction: "YOUR_ENCODED_TRANSACTION" // This needs to be implemented with actual swap transaction
+        },
+        {
+          headers: { 'Authorization': `Bearer ${process.env.HELIUS_API_KEY}` }
+        }
+      );
+
+      simulationResults = {
+        success: simulationResponse.data.success,
+        priceImpact: simulationResponse.data.priceImpact || 0,
+        error: simulationResponse.data.error
+      };
+
+      if (!simulationResults.success) {
+        errors.push(`Transaction simulation failed: ${simulationResults.error}`);
+      }
+
+      if (simulationResults.priceImpact > rugCheckConfig.helius.simulation.max_price_impact_percentage) {
+        errors.push(`Price impact too high: ${simulationResults.priceImpact}%`);
+      }
+    }
+
+    return {
+      provider: 'helius',
+      success: errors.length === 0,
+      details: {
+        tokenAge,
+        liquidityAnalysis: {
+          totalLiquiditySol,
+          dexesWithLiquidity,
+          isPairHealthy: totalLiquiditySol >= rugCheckConfig.helius.min_liquidity_sol
+        },
+        creatorAnalysis: {
+          creatorAge: creator ? (Date.now() - assetResponse.data.events[0]?.timestamp) / (1000 * 60 * 60 * 24) : 0,
+          totalTokens: creator ? assetResponse.data.content.supply.current_supply : 0,
+          failedTokens: 0,
+          isCreatorTrusted: true
+        },
+        permissions: {
+          hasFreezeAuthority,
+          hasMintAuthority,
+          isTokenFrozen: assetResponse.data.content.ownership.frozen
+        },
+        tradingMetrics: {
+          successfulSwaps: tradeHistoryResponse.data.summary.successfulSwaps,
+          failedSwaps: tradeHistoryResponse.data.summary.totalSwaps - tradeHistoryResponse.data.summary.successfulSwaps,
+          uniqueHolders: tradeHistoryResponse.data.summary.uniqueHolders,
+          averagePriceImpact: tradeHistoryResponse.data.summary.averagePriceImpact
+        },
+        simulationResults
+      },
+      warnings,
+      errors
+    };
+  } catch (error) {
+    return {
+      provider: 'helius',
+      success: false,
+      details: {
+        tokenAge: 0,
+        liquidityAnalysis: {
+          totalLiquiditySol: 0,
+          dexesWithLiquidity: [],
+          isPairHealthy: false
+        },
+        creatorAnalysis: {
+          creatorAge: 0,
+          totalTokens: 0,
+          failedTokens: 0,
+          isCreatorTrusted: false
+        },
+        permissions: {
+          hasFreezeAuthority: false,
+          hasMintAuthority: false,
+          isTokenFrozen: false
+        },
+        tradingMetrics: {
+          successfulSwaps: 0,
+          failedSwaps: 0,
+          uniqueHolders: 0,
+          averagePriceImpact: 0
+        },
+        simulationResults: {
+          success: false,
+          priceImpact: 0
+        }
+      },
+      warnings: [],
+      errors: [(error as Error).message]
+    };
+  }
+}
+
+export async function getRugCheck(tokenMint: string): Promise<RugCheckResult> {
+  return rugCheckConfig.provider === 'helius' 
+    ? getRugCheckHelius(tokenMint)
+    : getRugCheckXYZ(tokenMint);
+}
+
+export async function getRugCheckConfirmed(tokenMint: string | null): Promise<RugCheckResult> {
+  if (!tokenMint) {
+    logger.warn('No token mint provided for rug check');
+    return {
+      provider: 'helius',
+      success: false,
+      details: {
+        tokenAge: 0,
+        liquidityAnalysis: {
+          totalLiquiditySol: 0,
+          dexesWithLiquidity: [],
+          isPairHealthy: false
+        },
+        creatorAnalysis: {
+          creatorAge: 0,
+          totalTokens: 0,
+          failedTokens: 0,
+          isCreatorTrusted: false
+        },
+        permissions: {
+          hasFreezeAuthority: false,
+          hasMintAuthority: false,
+          isTokenFrozen: false
+        },
+        tradingMetrics: {
+          successfulSwaps: 0,
+          failedSwaps: 0,
+          uniqueHolders: 0,
+          averagePriceImpact: 0
+        },
+        simulationResults: {
+          success: false,
+          priceImpact: 0
+        }
+      },
+      warnings: ['No token mint provided'],
+      errors: []
+    };
+  }
+
+  try {
+    // First try Helius rug check
+    const heliusResult = await getRugCheckHelius(tokenMint);
+    if (heliusResult.success) {
+      return heliusResult;
+    }
+
+    // If Helius fails, try RugCheck XYZ
+    const rugCheckXYZResult = await getRugCheckXYZ(tokenMint);
+    if (rugCheckXYZResult.success) {
+      return rugCheckXYZResult;
+    }
+
+    // If both fail, return a comprehensive failure with Helius format
+    return {
+      provider: 'helius',
+      success: false,
+      details: heliusResult.details,
+      warnings: ['Failed both Helius and RugCheck XYZ checks'],
+      errors: [
+        `Helius Error: ${JSON.stringify(heliusResult.errors)}`,
+        `RugCheck XYZ Error: ${JSON.stringify(rugCheckXYZResult.errors)}`
+      ]
+    };
+  } catch (error) {
+    logger.error('Error in getRugCheckConfirmed', { 
+      tokenMint, 
+      error: error instanceof Error ? error.message : String(error) 
+    });
+
+    return {
+      provider: 'helius',
+      success: false,
+      details: {
+        tokenAge: 0,
+        liquidityAnalysis: {
+          totalLiquiditySol: 0,
+          dexesWithLiquidity: [],
+          isPairHealthy: false
+        },
+        creatorAnalysis: {
+          creatorAge: 0,
+          totalTokens: 0,
+          failedTokens: 0,
+          isCreatorTrusted: false
+        },
+        permissions: {
+          hasFreezeAuthority: false,
+          hasMintAuthority: false,
+          isTokenFrozen: false
+        },
+        tradingMetrics: {
+          successfulSwaps: 0,
+          failedSwaps: 0,
+          uniqueHolders: 0,
+          averagePriceImpact: 0
+        },
+        simulationResults: {
+          success: false,
+          priceImpact: 0,
+          error: error instanceof Error ? error.message : String(error)
+        }
+      },
+      warnings: [],
+      errors: [error instanceof Error ? error.message : String(error)]
+    };
+  }
+}
+
+export async function fetchAndSaveSwapDetails(
+  signature: string,
+  tokenMint: string,
+  tx: string,
+  tokenDecimals: number
+): Promise<boolean> {
   const txUrl = process.env.HELIUS_HTTPS_URI_TX || "";
   const priceUrl = process.env.JUP_HTTPS_PRICE_URI || "";
   const rpcUrl = process.env.HELIUS_HTTPS_URI || "";

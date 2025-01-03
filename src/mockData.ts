@@ -18,8 +18,12 @@ const logger = winston.createLogger({
 
 export async function insertMockData() {
   try {
+    const dbPath = config.swap.db_name_tracker_holdings;
+    logger.info(`Attempting to open database at: ${dbPath}`);
+    logger.info(`Current working directory: ${process.cwd()}`);
+
     const db = await open({
-      filename: config.swap.db_name_tracker_holdings,
+      filename: dbPath,
       driver: sqlite3.Database
     });
 
@@ -38,7 +42,8 @@ export async function insertMockData() {
         SolFeePaidUSDC REAL,
         PerTokenPaidUSDC REAL,
         Slot INTEGER NOT NULL,
-        Program TEXT NOT NULL
+        Program TEXT NOT NULL,
+        WalletAddress TEXT
       );
     `);
 
@@ -58,7 +63,8 @@ export async function insertMockData() {
         SolFeePaidUSDC: 0.001,
         PerTokenPaidUSDC: 0.0018,
         Slot: 1234567,
-        Program: 'raydium'
+        Program: 'raydium',
+        WalletAddress: 'WALLET_ADDRESS_1'
       },
       {
         Time: Math.floor(Date.now() / 1000) - 1800, // 30 minutes ago
@@ -71,7 +77,8 @@ export async function insertMockData() {
         SolFeePaidUSDC: null,
         PerTokenPaidUSDC: null,
         Slot: 1234568,
-        Program: 'raydium'
+        Program: 'raydium',
+        WalletAddress: 'WALLET_ADDRESS_2'
       },
       {
         Time: Math.floor(Date.now() / 1000) - 900, // 15 minutes ago
@@ -84,7 +91,8 @@ export async function insertMockData() {
         SolFeePaidUSDC: 0.001,
         PerTokenPaidUSDC: 0.00125,
         Slot: 1234569,
-        Program: 'raydium'
+        Program: 'raydium',
+        WalletAddress: 'WALLET_ADDRESS_3'
       },
       {
         Time: Math.floor(Date.now() / 1000) - 300, // 5 minutes ago
@@ -97,7 +105,8 @@ export async function insertMockData() {
         SolFeePaidUSDC: null,
         PerTokenPaidUSDC: null,
         Slot: 1234570,
-        Program: 'raydium'
+        Program: 'raydium',
+        WalletAddress: 'WALLET_ADDRESS_4'
       },
       {
         Time: Math.floor(Date.now() / 1000) - 60, // 1 minute ago
@@ -110,30 +119,36 @@ export async function insertMockData() {
         SolFeePaidUSDC: null,
         PerTokenPaidUSDC: null,
         Slot: 1234571,
-        Program: 'raydium'
+        Program: 'raydium',
+        WalletAddress: 'WALLET_ADDRESS_5'
       }
     ];
 
-    for (const data of mockData) {
-      await db.run(`
-        INSERT INTO holdings (
-          Time, Token, TokenName, Balance, SolPaid, SolFeePaid, 
-          SolPaidUSDC, SolFeePaidUSDC, PerTokenPaidUSDC, Slot, Program
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        data.Time, data.Token, data.TokenName, data.Balance, data.SolPaid,
-        data.SolFeePaid, data.SolPaidUSDC, data.SolFeePaidUSDC,
-        data.PerTokenPaidUSDC, data.Slot, data.Program
-      ]);
+    // Prepare the insert statement
+    const insertStmt = await db.prepare(`
+      INSERT INTO holdings (
+        Time, Token, TokenName, Balance, SolPaid, SolFeePaid, 
+        SolPaidUSDC, SolFeePaidUSDC, PerTokenPaidUSDC, 
+        Slot, Program, WalletAddress
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    // Insert each mock data entry
+    for (const entry of mockData) {
+      await insertStmt.run(
+        entry.Time, entry.Token, entry.TokenName, entry.Balance, 
+        entry.SolPaid, entry.SolFeePaid, entry.SolPaidUSDC, 
+        entry.SolFeePaidUSDC, entry.PerTokenPaidUSDC, 
+        entry.Slot, entry.Program, entry.WalletAddress
+      );
     }
+
+    await insertStmt.finalize();
 
     logger.info('Mock data inserted successfully');
     await db.close();
   } catch (error) {
-    logger.error('Error inserting mock data', {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : 'No stack trace'
-    });
+    logger.error('Error inserting mock data', { error });
     throw error;
   }
 }

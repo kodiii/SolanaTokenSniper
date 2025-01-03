@@ -31,10 +31,10 @@ export const config = {
   "rug_check": {
     "verbose_log": true,
     "single_holder_ownership": 30,
-    "low_liquidity": 1000,
+    "low_liquidity": 10,
     "not_allowed": [
       "Freeze Authority still enabled",
-      "Copycat token"
+      "Mint Authority still enabled"
     ]
   }
 };

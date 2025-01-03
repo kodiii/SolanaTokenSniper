@@ -29,21 +29,25 @@
   min-width: 400px;
   max-width: 600px;
   background: #1e1e1e;
-  padding: 2rem;
+  padding: 1rem;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: scroll;
+  max-height: 100vh;
 }
 
 .right-column {
   flex: 2;
   min-width: 600px;
   background: #1e1e1e;
-  padding: 2rem;
+  padding: 1rem;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   gap: 20px;
+  overflow: scroll;
+  max-height: 100vh;
 }
 
 .side-panel {
@@ -83,7 +87,7 @@
   overflow: auto;
   background: #2d2d2d;
   border-radius: 8px;
-  padding: 20px;
+  padding: 0.5rem;
 }
 
 .transactions-dashboard table {

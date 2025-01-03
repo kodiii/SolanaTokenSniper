@@ -3,41 +3,51 @@ import './Settings.css';
 
 interface SwapSettingsProps {
   settings: {
-    verboseLog: boolean;
-    prioFeeMaxLamports: number;
-    prioLevel: string;
+    verbose_log: boolean;
+    prio_fee_max_lamports: number;
+    prio_level: string;
     amount: string;
-    slippageBps: string;
-    dbNameTrackerHoldings: string;
-    tokenNotTradable400ErrorRetries: number;
-    tokenNotTradable400ErrorDelay: number;
+    slippage_bps: string;
+    db_name_tracker_holdings: string;
+    token_not_tradable_400_error_retries: number;
+    token_not_tradable_400_error_delay: number;
   };
   onChange: (newSettings: {
-    verboseLog: boolean;
-    prioFeeMaxLamports: number;
-    prioLevel: string;
+    verbose_log: boolean;
+    prio_fee_max_lamports: number;
+    prio_level: string;
     amount: string;
-    slippageBps: string;
-    dbNameTrackerHoldings: string;
-    tokenNotTradable400ErrorRetries: number;
-    tokenNotTradable400ErrorDelay: number;
+    slippage_bps: string;
+    db_name_tracker_holdings: string;
+    token_not_tradable_400_error_retries: number;
+    token_not_tradable_400_error_delay: number;
   }) => void;
 }
 
-const SwapSettings: React.FC<SwapSettingsProps> = ({ settings, onChange }) => {
+const defaultSettings = {
+  verbose_log: true,
+  prio_fee_max_lamports: 1000000,
+  prio_level: "veryHigh",
+  amount: "10000000",
+  slippage_bps: "200",
+  db_name_tracker_holdings: "src/tracker/holdings.db",
+  token_not_tradable_400_error_retries: 5,
+  token_not_tradable_400_error_delay: 2000
+};
+
+const SwapSettings: React.FC<SwapSettingsProps> = ({ 
+  settings = defaultSettings, 
+  onChange 
+}) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    if (e.target instanceof HTMLInputElement && e.target.type === 'checkbox') {
-      onChange({
-        ...settings,
-        [name]: e.target.checked
-      });
-    } else {
-      onChange({
-        ...settings,
-        [name]: value
-      });
-    }
+    const { name, value, type } = e.target as HTMLInputElement;
+    const newValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked :
+                    type === 'number' ? parseInt(value) : value;
+    
+    onChange({
+      ...settings,
+      [name]: newValue
+    });
   };
 
   return (
@@ -47,30 +57,30 @@ const SwapSettings: React.FC<SwapSettingsProps> = ({ settings, onChange }) => {
         <div className="checkbox-wrapper">
           <input
             type="checkbox"
-            id="verboseLog"
-            name="verboseLog"
-            checked={settings.verboseLog}
+            id="verbose_log"
+            name="verbose_log"
+            checked={settings.verbose_log}
             onChange={handleChange}
           />
-          <label htmlFor="verboseLog">Enable Verbose Logging</label>
+          <label htmlFor="verbose_log">Enable Verbose Logging</label>
         </div>
       </div>
       <div className="form-group">
-        <label htmlFor="prioFeeMaxLamports">Priority Fee Max (Lamports)</label>
+        <label htmlFor="prio_fee_max_lamports">Priority Fee Max (Lamports)</label>
         <input
           type="number"
-          id="prioFeeMaxLamports"
-          name="prioFeeMaxLamports"
-          value={settings.prioFeeMaxLamports}
+          id="prio_fee_max_lamports"
+          name="prio_fee_max_lamports"
+          value={settings.prio_fee_max_lamports}
           onChange={handleChange}
         />
       </div>
       <div className="form-group">
-        <label htmlFor="prioLevel">Priority Level</label>
+        <label htmlFor="prio_level">Priority Level</label>
         <select
-          id="prioLevel"
-          name="prioLevel"
-          value={settings.prioLevel}
+          id="prio_level"
+          name="prio_level"
+          value={settings.prio_level}
           onChange={handleChange}
           className="select-input"
         >
@@ -91,42 +101,42 @@ const SwapSettings: React.FC<SwapSettingsProps> = ({ settings, onChange }) => {
         />
       </div>
       <div className="form-group">
-        <label htmlFor="slippageBps">Slippage (BPS)</label>
+        <label htmlFor="slippage_bps">Slippage (BPS)</label>
         <input
           type="text"
-          id="slippageBps"
-          name="slippageBps"
-          value={settings.slippageBps}
+          id="slippage_bps"
+          name="slippage_bps"
+          value={settings.slippage_bps}
           onChange={handleChange}
         />
       </div>
       <div className="form-group">
-        <label htmlFor="dbNameTrackerHoldings">DB Name Tracker Holdings</label>
+        <label htmlFor="db_name_tracker_holdings">DB Name Tracker Holdings</label>
         <input
           type="text"
-          id="dbNameTrackerHoldings"
-          name="dbNameTrackerHoldings"
-          value={settings.dbNameTrackerHoldings}
+          id="db_name_tracker_holdings"
+          name="db_name_tracker_holdings"
+          value={settings.db_name_tracker_holdings}
           onChange={handleChange}
         />
       </div>
       <div className="form-group">
-        <label htmlFor="tokenNotTradable400ErrorRetries">Token Not Tradable 400 Error Retries</label>
+        <label htmlFor="token_not_tradable_400_error_retries">Token Not Tradable 400 Error Retries</label>
         <input
           type="number"
-          id="tokenNotTradable400ErrorRetries"
-          name="tokenNotTradable400ErrorRetries"
-          value={settings.tokenNotTradable400ErrorRetries}
+          id="token_not_tradable_400_error_retries"
+          name="token_not_tradable_400_error_retries"
+          value={settings.token_not_tradable_400_error_retries}
           onChange={handleChange}
         />
       </div>
       <div className="form-group">
-        <label htmlFor="tokenNotTradable400ErrorDelay">Token Not Tradable 400 Error Delay (ms)</label>
+        <label htmlFor="token_not_tradable_400_error_delay">Token Not Tradable 400 Error Delay (ms)</label>
         <input
           type="number"
-          id="tokenNotTradable400ErrorDelay"
-          name="tokenNotTradable400ErrorDelay"
-          value={settings.tokenNotTradable400ErrorDelay}
+          id="token_not_tradable_400_error_delay"
+          name="token_not_tradable_400_error_delay"
+          value={settings.token_not_tradable_400_error_delay}
           onChange={handleChange}
         />
       </div>
