@@ -5,8 +5,8 @@ export const config = {
   },
   tx: {
     fetch_tx_max_retries: 5,
-    fetch_tx_initial_delay: 2000, // Initial delay before fetching LP creation transaction details (3 seconds)
-    swap_tx_initial_delay: 1000, // Initial delay before first buy (1 second)
+    fetch_tx_initial_delay: 1000, // Initial delay before fetching LP creation transaction details (3 seconds)
+    swap_tx_initial_delay: 500, // Initial delay before first buy (1 second)
     get_timeout: 10000, // Timeout for API requests
     concurrent_transactions: 1, // Number of simultaneous transactions
     retry_delay: 500, // Delay between retries (0.5 seconds)
@@ -49,6 +49,8 @@ export const config = {
     contain_string: ["AI", "GPT", "AGENT"], // Strings to match in token names (case insensitive)
     allow_insider_topholders: false, // Allow inseder accounts to be part of the topholders
     max_alowed_pct_topholders: 15, // Max allowed percentage an individual topholder might hold
+    max_alowed_pct_all_topholders: 30, // Max allowed totalpercentage all topholders in total might hold related to supply
+
     exclude_lp_from_topholders: true, // If true, Liquidity Pools will not be seen as top holders
     // Warning
     min_total_markets: 0,

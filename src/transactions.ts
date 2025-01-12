@@ -108,6 +108,9 @@ export async function fetchTransactionDetails(signature: string): Promise<MintsD
       console.log(`SOL Token Account: ${solTokenAccount}`);
       console.log(`New Token Account: ${newTokenAccount}`);
 
+      console.log(`\x1b[32mPHOTON TRACKER: https://photon-sol.tinyastro.io/en/lp/${newTokenAccount}\x1b[0m`);
+      console.log(`\x1b[94mDEXSCREENER TRACKER: https://dexscreener.com/solana/${newTokenAccount}\x1b[0m`);
+
       const displayData: MintsDataReponse = {
         tokenMint: newTokenAccount,
         solMint: solTokenAccount,
@@ -427,6 +430,10 @@ export async function getRugCheckConfirmed(tokenMint: string): Promise<boolean> 
     {
       check: topHolders.some((holder) => holder.pct > rugCheckConfig.max_alowed_pct_topholders),
       message: "🚫 An individual top holder cannot hold more than the allowed percentage of the total supply",
+    },
+    {
+      check: topHolders.reduce((sum, holder) => sum + holder.pct, 0) > rugCheckConfig.max_alowed_pct_all_topholders,
+      message: `🚫 Ownership Centralization: Top holders control ${topHolders.reduce((sum, holder) => sum + holder.pct, 0).toFixed(2)}%, exceeding the ${rugCheckConfig.max_alowed_pct_all_topholders}% safety threshold`,
     },
     {
       check: totalLPProviders < rugCheckConfig.min_total_lp_providers,
