@@ -4,17 +4,17 @@ export const config = {
     wsol_pc_mint: "So11111111111111111111111111111111111111112",
   },
   tx: {
-    fetch_tx_max_retries: 10,
-    fetch_tx_initial_delay: 3000, // Initial delay before fetching LP creation transaction details (3 seconds)
+    fetch_tx_max_retries: 5,
+    fetch_tx_initial_delay: 2000, // Initial delay before fetching LP creation transaction details (3 seconds)
     swap_tx_initial_delay: 1000, // Initial delay before first buy (1 second)
     get_timeout: 10000, // Timeout for API requests
     concurrent_transactions: 1, // Number of simultaneous transactions
     retry_delay: 500, // Delay between retries (0.5 seconds)
   },
   swap: {
-    verbose_log: false,
+    verbose_log: true,
     prio_fee_max_lamports: 1000000, // 0.001 SOL
-    prio_level: "veryHigh", // If you want to land transaction fast, set this to use `veryHigh`. You will pay on average higher priority fee.
+    prio_level: "medium", // If you want to land transaction fast, set this to use `veryHigh`. You will pay on average higher priority fee.
     amount: "10000000", //0.01 SOL
     slippageBps: "200", // 2%
     db_name_tracker_holdings: "src/tracker/holdings.db", // Sqlite Database location
@@ -24,15 +24,15 @@ export const config = {
   sell: {
     price_source: "dex", // dex=Dexscreener,jup=Jupiter Agregator (Dex is most accurate and Jupiter is always used as fallback)
     prio_fee_max_lamports: 1000000, // 0.001 SOL
-    prio_level: "veryHigh", // If you want to land transaction fast, set this to use `veryHigh`. You will pay on average higher priority fee.
+    prio_level: "medium", // If you want to land transaction fast, set this to use `veryHigh`. You will pay on average higher priority fee.
     slippageBps: "200", // 2%
-    auto_sell: false, // If set to true, stop loss and take profit triggers automatically when set.
-    stop_loss_percent: 5,
-    take_profit_percent: 50,
+    auto_sell: true, // If set to true, stop loss and take profit triggers automatically when set.
+    stop_loss_percent: 30,
+    take_profit_percent: 25,
     track_public_wallet: "", // If set an additional log line will be shown with a link to track your wallet
   },
   rug_check: {
-    verbose_log: false,
+    verbose_log: true,
     simulation_mode: true,
     // Dangerous
     allow_mint_authority: false, // The mint authority is the address that has permission to mint (create) new tokens. Strongly Advised to set to false.
@@ -45,24 +45,26 @@ export const config = {
     block_returning_token_creators: true,
     block_symbols: ["XXX"],
     block_names: ["XXX"],
+    only_contain_string: false, // Enable/disable string containment filter
+    contain_string: ["AI", "GPT", "AGENT"], // Strings to match in token names (case insensitive)
     allow_insider_topholders: false, // Allow inseder accounts to be part of the topholders
-    max_alowed_pct_topholders: 1, // Max allowed percentage an individual topholder might hold
-    exclude_lp_from_topholders: false, // If true, Liquidity Pools will not be seen as top holders
+    max_alowed_pct_topholders: 15, // Max allowed percentage an individual topholder might hold
+    exclude_lp_from_topholders: true, // If true, Liquidity Pools will not be seen as top holders
     // Warning
-    min_total_markets: 999,
-    min_total_lp_providers: 999,
-    min_total_market_Liquidity: 1000000,
+    min_total_markets: 0,
+    min_total_lp_providers: 0,
+    min_total_market_Liquidity: 30000,
     // Misc
     ignore_pump_fun: true,
-    max_score: 1, // Set to 0 to ignore
+    max_score: 11400, // Set to 0 to ignore
     legacy_not_allowed: [
-      "Low Liquidity",
+      //"Low Liquidity",
       "Single holder ownership",
       "High holder concentration",
       "Freeze Authority still enabled",
-      "Large Amount of LP Unlocked",
+      //"Large Amount of LP Unlocked",
       "Copycat token",
-      "Low amount of LP Providers",
+      //"Low amount of LP Providers",
     ],
   },
 };

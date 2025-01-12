@@ -35,7 +35,7 @@ export async function fetchTransactionDetails(signature: string): Promise<MintsD
       // Output logs
       console.log(`Attempt ${retryCount + 1} of ${maxRetries} to fetch transaction details...`);
 
-      const response = await axios.post<any>(
+      const response = await axios.post<TransactionDetailsResponseArray>(
         txUrl,
         {
           transactions: [signature],
@@ -114,8 +114,8 @@ export async function fetchTransactionDetails(signature: string): Promise<MintsD
       };
 
       return displayData;
-    } catch (error: any) {
-      console.log(`Attempt ${retryCount + 1} failed: ${error.message}`);
+    } catch (error: unknown) {
+      console.log(`Attempt ${retryCount + 1} failed: ${error instanceof Error ? error.message : String(error)}`);
 
       retryCount++;
 
@@ -164,9 +164,9 @@ export async function createSwapTransaction(solMint: string, tokenMint: string):
 
       quoteResponseData = quoteResponse.data; // Store the successful response
       break;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Retry when error is TOKEN_NOT_TRADABLE
-      if (error.response && error.response.status === 400) {
+      if (axios.isAxiosError(error) && error.response?.status === 400) {
         const errorData = error.response.data;
         if (errorData.errorCode === "TOKEN_NOT_TRADABLE") {
           retryCount++;
@@ -176,21 +176,25 @@ export async function createSwapTransaction(solMint: string, tokenMint: string):
       }
 
       // Throw error (null) when error is not TOKEN_NOT_TRADABLE
-      console.error("Error while requesting a new swap quote:", error.message);
+      console.error("Error while requesting a new swap quote:", error instanceof Error ? error.message : String(error));
       if (config.swap.verbose_log && config.swap.verbose_log === true) {
         console.log("Verbose Error Message:");
-        if (error.response) {
-          // Server responded with a status other than 2xx
-          console.error("Error Status:", error.response.status);
-          console.error("Error Status Text:", error.response.statusText);
-          console.error("Error Data:", error.response.data); // API error message
-          console.error("Error Headers:", error.response.headers);
-        } else if (error.request) {
-          // Request was made but no response was received
-          console.error("No Response:", error.request);
+        if (axios.isAxiosError(error)) {
+          if (error.response) {
+            // Server responded with a status other than 2xx
+            console.error("Error Status:", error.response.status);
+            console.error("Error Status Text:", error.response.statusText);
+            console.error("Error Data:", error.response.data); // API error message
+            console.error("Error Headers:", error.response.headers);
+          } else if (error.request) {
+            // Request was made but no response was received
+            console.error("No Response:", error.request);
+          } else {
+            // Other errors
+            console.error("Error Message:", error.message);
+          }
         } else {
-          // Other errors
-          console.error("Error Message:", error.message);
+          console.error("Error:", error instanceof Error ? error.message : String(error));
         }
       }
       return null;
@@ -238,22 +242,26 @@ export async function createSwapTransaction(solMint: string, tokenMint: string):
     }
 
     serializedQuoteResponseData = swapResponse.data; // Store the successful response
-  } catch (error: any) {
-    console.error("Error while sending the swap quote:", error.message);
+    } catch (error: unknown) {
+      console.error("Error while sending the swap quote:", error instanceof Error ? error.message : String(error));
     if (config.swap.verbose_log && config.swap.verbose_log === true) {
       console.log("Verbose Error Message:");
-      if (error.response) {
-        // Server responded with a status other than 2xx
-        console.error("Error Status:", error.response.status);
-        console.error("Error Status Text:", error.response.statusText);
-        console.error("Error Data:", error.response.data); // API error message
-        console.error("Error Headers:", error.response.headers);
-      } else if (error.request) {
-        // Request was made but no response was received
-        console.error("No Response:", error.request);
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // Server responded with a status other than 2xx
+          console.error("Error Status:", error.response.status);
+          console.error("Error Status Text:", error.response.statusText);
+          console.error("Error Data:", error.response.data); // API error message
+          console.error("Error Headers:", error.response.headers);
+        } else if (error.request) {
+          // Request was made but no response was received
+          console.error("No Response:", error.request);
+        } else {
+          // Other errors
+          console.error("Error Message:", error.message);
+        }
       } else {
-        // Other errors
-        console.error("Error Message:", error.message);
+        console.error("Error:", error instanceof Error ? error.message : String(error));
       }
     }
     return null;
@@ -265,7 +273,7 @@ export async function createSwapTransaction(solMint: string, tokenMint: string):
   try {
     if (!serializedQuoteResponseData) return null;
     const swapTransactionBuf = Buffer.from(serializedQuoteResponseData.swapTransaction, "base64");
-    var transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+    const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
 
     // sign the transaction
     transaction.sign([myWallet.payer]);
@@ -304,22 +312,26 @@ export async function createSwapTransaction(solMint: string, tokenMint: string):
     }
 
     return txid;
-  } catch (error: any) {
-    console.error("Error while signing and sending the transaction:", error.message);
+    } catch (error: unknown) {
+      console.error("Error while signing and sending the transaction:", error instanceof Error ? error.message : String(error));
     if (config.swap.verbose_log && config.swap.verbose_log === true) {
       console.log("Verbose Error Message:");
-      if (error.response) {
-        // Server responded with a status other than 2xx
-        console.error("Error Status:", error.response.status);
-        console.error("Error Status Text:", error.response.statusText);
-        console.error("Error Data:", error.response.data); // API error message
-        console.error("Error Headers:", error.response.headers);
-      } else if (error.request) {
-        // Request was made but no response was received
-        console.error("No Response:", error.request);
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // Server responded with a status other than 2xx
+          console.error("Error Status:", error.response.status);
+          console.error("Error Status Text:", error.response.statusText);
+          console.error("Error Data:", error.response.data); // API error message
+          console.error("Error Headers:", error.response.headers);
+        } else if (error.request) {
+          // Request was made but no response was received
+          console.error("No Response:", error.request);
+        } else {
+          // Other errors
+          console.error("Error Message:", error.message);
+        }
       } else {
-        // Other errors
-        console.error("Error Message:", error.message);
+        console.error("Error:", error instanceof Error ? error.message : String(error));
       }
     }
     return null;
@@ -343,8 +355,8 @@ export async function getRugCheckConfirmed(tokenMint: string): Promise<boolean> 
   const mintAuthority = tokenReport.token.mintAuthority;
   const freezeAuthority = tokenReport.token.freezeAuthority;
   const isInitialized = tokenReport.token.isInitialized;
-  const supply = tokenReport.token.supply;
-  const decimals = tokenReport.token.decimals;
+  //const supply = tokenReport.token.supply;
+  //const decimals = tokenReport.token.decimals;
   const tokenName = tokenReport.tokenMeta.name;
   const tokenSymbol = tokenReport.tokenMeta.symbol;
   const tokenMutable = tokenReport.tokenMeta.mutable;
@@ -495,10 +507,10 @@ export async function getRugCheckConfirmed(tokenMint: string): Promise<boolean> 
 export async function fetchAndSaveSwapDetails(tx: string): Promise<boolean> {
   const txUrl = process.env.HELIUS_HTTPS_URI_TX || "";
   const priceUrl = process.env.JUP_HTTPS_PRICE_URI || "";
-  const rpcUrl = process.env.HELIUS_HTTPS_URI || "";
+  //const rpcUrl = process.env.HELIUS_HTTPS_URI || "";
 
   try {
-    const response = await axios.post<any>(
+    const response = await axios.post<TransactionDetailsResponseArray>(
       txUrl,
       { transactions: [tx] },
       {
@@ -529,7 +541,7 @@ export async function fetchAndSaveSwapDetails(tx: string): Promise<boolean> {
 
     // Get latest Sol Price
     const solMint = config.liquidity_pool.wsol_pc_mint;
-    const priceResponse = await axios.get<any>(priceUrl, {
+    const priceResponse = await axios.get<{data: {[key: string]: {price: number}}}>(priceUrl, {
       params: {
         ids: solMint,
       },
@@ -573,8 +585,8 @@ export async function fetchAndSaveSwapDetails(tx: string): Promise<boolean> {
     });
 
     return true;
-  } catch (error: any) {
-    console.error("Error during request:", error.message);
+    } catch (error: unknown) {
+    console.error("Error during request:", error instanceof Error ? error.message : String(error));
     return false;
   }
 }
@@ -664,7 +676,7 @@ export async function createSellTransaction(solMint: string, tokenMint: string, 
 
     // deserialize the transaction
     const swapTransactionBuf = Buffer.from(swapTransaction.data.swapTransaction, "base64");
-    var transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+    const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
 
     // sign the transaction
     transaction.sign([myWallet.payer]);
@@ -706,7 +718,7 @@ export async function createSellTransaction(solMint: string, tokenMint: string, 
       msg: null,
       tx: txid,
     };
-  } catch (error: any) {
+    } catch (error: unknown) {
     return {
       success: false,
       msg: error instanceof Error ? error.message : "Unknown error",
