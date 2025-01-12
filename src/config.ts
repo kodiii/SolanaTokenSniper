@@ -12,7 +12,7 @@ export const config = {
     retry_delay: 500, // Delay between retries (0.5 seconds)
   },
   swap: {
-    verbose_log: true,
+    verbose_log: false,
     prio_fee_max_lamports: 1000000, // 0.001 SOL
     prio_level: "medium", // If you want to land transaction fast, set this to use `veryHigh`. You will pay on average higher priority fee.
     amount: "10000000", //0.01 SOL
@@ -32,7 +32,7 @@ export const config = {
     track_public_wallet: "", // If set an additional log line will be shown with a link to track your wallet
   },
   rug_check: {
-    verbose_log: true,
+    verbose_log: false,
     simulation_mode: true,
     // Dangerous
     allow_mint_authority: false, // The mint authority is the address that has permission to mint (create) new tokens. Strongly Advised to set to false.
