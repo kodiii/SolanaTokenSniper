@@ -1,5 +1,5 @@
-import { selectAllTokens } from "./tracker/db";
-import { fetchTransactionDetails, createSwapTransaction, getRugCheckConfirmed, fetchAndSaveSwapDetails, createSellTransaction } from "./transactions";
+import { selectAllTokens } from "./tracker/db.js";
+import { fetchTransactionDetails, createSwapTransaction, getRugCheckConfirmed, fetchAndSaveSwapDetails, createSellTransaction } from "./transactions.js";
 
 (async () => {
   const testId = null;

@@ -1,14 +1,15 @@
 {
   "name": "sol_token_sniper",
   "version": "1.0.0",
+  "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
     "start:tracker": "node dist/tracker/index.js",
-    "dev": "ts-node src/index.ts",
-    "tracker": "ts-node src/tracker/index.ts",
-    "test": "ts-node src/test.ts",
+    "dev": "NODE_OPTIONS='--loader ts-node/esm' ts-node src/index.ts",
+    "tracker": "NODE_OPTIONS='--loader ts-node/esm' ts-node src/tracker/index.ts",
+    "test": "NODE_OPTIONS='--loader ts-node/esm' ts-node src/test.ts",
     "clean": "rm -rf dist"
   },
   "keywords": [],

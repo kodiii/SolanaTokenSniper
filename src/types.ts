@@ -1,12 +1,34 @@
-export interface MintsDataReponse {
-  tokenMint?: string;
-  solMint?: string;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { config } from './config.js';
+
+// Add parallel configuration to Config type
+declare module './config.js' {
+  interface Config {
+    parallel?: {
+      max_workers?: number;
+      worker_timeout?: number;
+    };
+  }
 }
 
+/**
+ * Interface for mints data response
+ */
+export interface MintsDataReponse {
+  tokenMint: string;
+  solMint: string;
+}
+
+/**
+ * Interface for quote response
+ */
 export interface QuoteResponse {
   data: unknown;
 }
 
+/**
+ * Interface for serialized quote response
+ */
 export interface SerializedQuoteResponse {
   swapTransaction: string;
   lastValidBlockHeight: number;
@@ -27,6 +49,9 @@ export interface SerializedQuoteResponse {
   simulationError: string | null;
 }
 
+/**
+ * Extended interface for rug check response
+ */
 export interface RugResponseExtended {
   mint: string;
   tokenProgram: string;
@@ -89,6 +114,9 @@ export interface RugResponseExtended {
   rugged: boolean;
 }
 
+/**
+ * Interface for WebSocket requests
+ */
 export interface WebSocketRequest {
   jsonrpc: string;
   id: number;
@@ -259,7 +287,7 @@ export interface SwapEventDetailsResponse {
 }
 
 export interface HoldingRecord {
-  id?: number; // Optional because it's added by the database
+  id?: number;
   Time: number;
   Token: string;
   TokenName: string;
@@ -274,7 +302,7 @@ export interface HoldingRecord {
 }
 
 export interface NewTokenRecord {
-  id?: number; // Optional because it's added by the database
+  id?: number;
   time: number;
   name: string;
   mint: string;
@@ -342,5 +370,5 @@ export interface LastPriceDexReponse {
     };
   }[];
 }
-// Update to reflect an array of transactions
+
 export type TransactionDetailsResponseArray = TransactionDetailsResponse[];
