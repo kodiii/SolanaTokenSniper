@@ -70,7 +70,7 @@ export const config = {
     prio_level: "medium", // If you want to land transaction fast, set this to use `veryHigh`. You will pay on average higher priority fee.
     slippageBps: "200", // 2%
     auto_sell: true, // If set to true, stop loss and take profit triggers automatically when set.
-    stop_loss_percent: 30,
+    stop_loss_percent: 10,
     take_profit_percent: 25,
     track_public_wallet: "", // If set an additional log line will be shown with a link to track your wallet
   },
@@ -102,13 +102,13 @@ export const config = {
     ignore_pump_fun: true,
     max_score: 11400, // Set to 0 to ignore
     legacy_not_allowed: [
-      "Low Liquidity",
+      //"Low Liquidity",
       "Freeze Authority still enabled",
-      "Single holder ownership",
+      //"Single holder ownership",
       "High holder concentration",
       "Freeze Authority still enabled",
-      "Large Amount of LP Unlocked",
-      "Low Liquidity",
+      //"Large Amount of LP Unlocked",
+      //"Low Liquidity",
     ],
   },
 };
