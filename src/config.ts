@@ -97,7 +97,7 @@ export const config = {
     // Warning
     min_total_markets: 0,
     min_total_lp_providers: 0,
-    min_total_market_Liquidity: 30000,
+    min_total_market_Liquidity: 10000,
     // Misc
     ignore_pump_fun: true,
     max_score: 11400, // Set to 0 to ignore
