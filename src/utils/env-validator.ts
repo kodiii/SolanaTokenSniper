@@ -49,10 +49,12 @@ export function validateEnv(): EnvConfig {
     if (value && url.protocol !== protocol) {
       throw new Error(`🚫 ${envVar} must start with ${protocol}`);
     }
-    if (checkApiKey && value) {
+    
+    // Only check for api-key if it's a Helius URL
+    if (checkApiKey && value && value.includes("helius")) {
       const apiKey = url.searchParams.get("api-key");
       if (!apiKey || apiKey.trim() === "") {
-        throw new Error(`🚫 The 'api-key' parameter is missing or empty in the URL: ${value}`);
+        throw new Error(`🚫 The 'api-key' parameter is missing or empty in the Helius URL: ${value}`);
       }
     }
   };
