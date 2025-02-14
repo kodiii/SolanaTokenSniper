@@ -3,6 +3,10 @@ import { WebSocketRequest } from "./types"; // Typescript Types for type safety
 import { config } from "./config"; // Configuration parameters for our bot
 import { fetchTransactionDetails, createSwapTransaction, getRugCheckConfirmed, fetchAndSaveSwapDetails } from "./transactions";
 import { validateEnv } from "./utils/env-validator";
+import { SimulationService } from "./services";
+
+// Initialize simulation service if simulation mode is enabled
+const simulationService = config.rug_check.simulation_mode ? SimulationService.getInstance() : null;
 
 // Regional Variables
 let activeTransactions = 0;
@@ -65,14 +69,25 @@ async function processTransaction(signature: string): Promise<void> {
   console.log("👽 GMGN: https://gmgn.ai/sol/token/" + data.tokenMint);
   console.log("😈 BullX: https://neo.bullx.io/terminal?chainId=1399811149&address=" + data.tokenMint);
 
-  // Check if simulation mode is enabled
-  if (config.rug_check.simulation_mode) {
-    console.log("👀 Token not swapped. Simulation mode is enabled.");
+  // Handle paper trading if simulation mode is enabled
+  if (config.rug_check.simulation_mode && simulationService) {
+    console.log("🎮 Paper Trading Mode: Simulating trade for new token");
+    const tokenPrice = await simulationService.getTokenPrice(data.tokenMint);
+    if (tokenPrice) {
+      const success = await simulationService.executeBuy(data.tokenMint, data.tokenMint, tokenPrice);
+      if (success) {
+        console.log("🟢 Paper trade executed successfully");
+      } else {
+        console.log("❌ Failed to execute paper trade");
+      }
+    } else {
+      console.log("❌ Could not fetch token price for paper trading");
+    }
     console.log("🟢 Resuming looking for new tokens..\n");
     return;
   }
 
-  // Add initial delay before first buy
+  // Real trading flow - Add initial delay before first buy
   await new Promise((resolve) => setTimeout(resolve, config.tx.swap_tx_initial_delay));
 
   // Create Swap transaction
