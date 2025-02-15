@@ -36,29 +36,15 @@ export class PriceValidator {
         
         if (!history || history.prices.length < this.rollingAverageConfig.minDataPoints) {
             return {
-                isValid: true, // Accept initial prices
+                isValid: true,
                 confidence: 0.5,
                 reason: 'Insufficient historical data'
             };
         }
 
-        // Calculate rolling average
         const rollingAverage = this.calculateRollingAverage(history.prices);
         
-        // Calculate deviation
-        const deviation = Math.abs((newPrice - rollingAverage) / rollingAverage);
-
-        // Check if price deviation is within acceptable range
-        if (deviation > this.rollingAverageConfig.maxDeviation) {
-            return {
-                isValid: false,
-                confidence: 1 - deviation,
-                reason: `Price deviation (${(deviation * 100).toFixed(2)}%) exceeds maximum allowed (${(this.rollingAverageConfig.maxDeviation * 100).toFixed(2)}%)`,
-                suggestedPrice: rollingAverage
-            };
-        }
-
-        // Cross-validate between sources
+        // Cross-validate between sources first
         const otherSource = source === 'jupiter' ? 'dexscreener' : 'jupiter';
         const latestOtherSourcePrice = this.getLatestPriceFromSource(history.prices, otherSource);
         
@@ -75,9 +61,27 @@ export class PriceValidator {
             }
         }
 
+        // Calculate deviation from rolling average
+        const deviation = (newPrice - rollingAverage) / rollingAverage;
+        const absDeviation = Math.abs(deviation);
+
+        // Asymmetric validation: allow more downside movement than upside
+        const maxAllowedDeviation = deviation > 0 
+            ? this.rollingAverageConfig.maxDeviation
+            : this.rollingAverageConfig.maxDeviation * 1.5;
+
+        if (absDeviation > maxAllowedDeviation) {
+            return {
+                isValid: false,
+                confidence: 1 - absDeviation,
+                reason: `Price deviation (${(absDeviation * 100).toFixed(2)}%) exceeds maximum allowed (${(maxAllowedDeviation * 100).toFixed(2)}%)`,
+                suggestedPrice: rollingAverage
+            };
+        }
+
         return {
             isValid: true,
-            confidence: 1 - deviation,
+            confidence: 1 - absDeviation,
             reason: 'Price within acceptable range'
         };
     }
