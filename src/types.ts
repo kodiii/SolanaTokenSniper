@@ -342,5 +342,32 @@ export interface LastPriceDexReponse {
     };
   }[];
 }
+
+// Price tracking interfaces
+export interface TokenPrice {
+  price: number;
+  timestamp: number;
+  source: 'jupiter' | 'dexscreener';
+}
+
+export interface PriceHistory {
+  mint: string;
+  prices: TokenPrice[];
+  lastValidation: number;
+}
+
+export interface PriceValidationResult {
+  isValid: boolean;
+  reason?: string;
+  confidence: number;
+  suggestedPrice?: number;
+}
+
+export interface RollingAverageConfig {
+  windowSize: number;  // Number of price points to consider
+  maxDeviation: number;  // Maximum allowed deviation from average
+  minDataPoints: number;  // Minimum required data points
+}
+
 // Update to reflect an array of transactions
 export type TransactionDetailsResponseArray = TransactionDetailsResponse[];

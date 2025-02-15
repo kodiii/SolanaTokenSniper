@@ -1,60 +1,101 @@
 # System Patterns - Solana Token Sniper
 
 ## Architecture Overview
-The system is split into two main components:
-1. Sniper Module (`src/index.ts`)
-2. Tracker Module (`src/tracker/index.ts`)
+The system follows a modular architecture with distinct components handling specific responsibilities.
 
-## Key Technical Decisions
+## Core Components
 
-### 1. Module Organization
+### Tracker Module
+Key component responsible for monitoring and managing token positions.
+
+#### Current Implementation
+1. Price Tracking
+   - Uses dual price sources (Jupiter/Dexscreener)
+   - Polls prices every 5 seconds
+   - Triggers SL/TP based on direct price comparisons
+
+2. Database Management
+   - SQLite for persistent storage
+   - Tracks holdings and transaction history
+   - Basic database operations
+
+3. Transaction Handling
+   - Direct balance string manipulation
+   - Simple sell order execution
+   - Basic transaction status checking
+
+#### Planned Improvements
+1. Price Source Management
+   - Validation for price source failures
+   - Price consistency checking between sources
+   - Rolling average price calculations
+   - Sudden price change detection system
+
+2. Database Operations
+   - Transaction wrapping for atomicity
+   - Connection pooling implementation
+   - Error recovery mechanisms
+   - Transaction lock system for sell orders
+
+3. Balance & Transaction Handling
+   - BigNumber library integration
+   - Proper decimal handling
+   - Balance reconciliation system
+   - Enhanced transaction verification
+
+4. Monitoring System
+   - Price source operation logging
+   - Price feed health checks
+   - Database connection monitoring
+   - Operational metrics collection
+
+## Critical Patterns
+
+### Price Validation Pattern
+```typescript
+interface PriceValidation {
+  primarySource: string;
+  secondarySource: string;
+  rollingAverageWindow: number;
+  maxPriceDeviation: number;
+  consistencyThreshold: number;
+}
 ```
-src/
-├── config.ts           # Configuration and parameters
-├── index.ts           # Main sniper logic
-├── transactions.ts    # Transaction handling
-├── types.ts          # TypeScript type definitions
-├── tracker/          # Token tracking module
-│   ├── db.ts        # Database operations
-│   └── index.ts     # Tracking logic
-└── utils/           # Utility functions
-    ├── env-validator.ts  # Environment validation
-    └── keys.ts          # Key management
+
+### Transaction Lock Pattern
+```typescript
+interface TransactionLock {
+  tokenMint: string;
+  operationType: 'buy' | 'sell';
+  timestamp: number;
+  status: 'pending' | 'completed' | 'failed';
+  retryCount: number;
+}
 ```
 
-### 2. Data Flow Patterns
-- Event-driven architecture for token detection
-- Asynchronous transaction processing
-- Database-backed token tracking
-- WebSocket-based real-time updates
+### Balance Management Pattern
+```typescript
+interface BalanceTracking {
+  tokenMint: string;
+  actualBalance: BigNumber;
+  trackedBalance: BigNumber;
+  lastReconciliation: number;
+  discrepancies: BalanceDiscrepancy[];
+}
+```
 
-### 3. State Management
-- SQLite database for persistent storage
-- Environment variables for configuration
-- In-memory tracking for active operations
+## Integration Points
+1. Price Feed Integration
+   - Jupiter API endpoints
+   - Dexscreener API connection
+   - Failover mechanisms
 
-### 4. Error Handling
-- Retry logic for swap operations
-- Transaction simulation before execution
-- Comprehensive error logging
-- Balance validation before operations
+2. Database Integration
+   - SQLite connection management
+   - Transaction isolation levels
+   - Error handling patterns
 
-### 5. Integration Patterns
-- REST API calls for external services
-- WebSocket subscriptions for blockchain events
-- Database transactions for state persistence
-- RPC node communication for blockchain interaction
-
-## Design Patterns Used
-1. Repository Pattern (DB operations)
-2. Service Pattern (External API interactions)
-3. Observer Pattern (WebSocket events)
-4. Strategy Pattern (Trading logic)
-5. Factory Pattern (Transaction creation)
-
-## Security Patterns
-1. Environment variable validation
-2. API key management
-3. Wallet key security
-4. Rate limiting
-5. Input validation
+3. Blockchain Integration
+   - Solana RPC connections
+   - Transaction confirmation handling
+   - Wallet balance monitoring
