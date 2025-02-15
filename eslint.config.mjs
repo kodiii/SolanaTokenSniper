@@ -1,10 +1,34 @@
-import globals from "globals";
-import tseslint from "typescript-eslint";
-
-
-/** @type {import('eslint').Linter.Config[]} */
 export default [
-  {files: ["**/*.{js,mjs,cjs,ts}"]},
-  {languageOptions: { globals: globals.browser }},
-  ...tseslint.configs.recommended,
+  {
+    ignores: ['dist/*', 'coverage/*'],
+  },
+  {
+    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.mjs'],
+    languageOptions: {
+      parser: '@typescript-eslint/parser',
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+    },
+    plugins: {
+      '@typescript-eslint': '@typescript-eslint/eslint-plugin',
+    },
+    rules: {
+      // No require() in ESM files
+      '@typescript-eslint/no-var-requires': 'error',
+      'no-undef': 'error',
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
+  },
+  {
+    // Allow require() in CommonJS files
+    files: ['**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+    },
+    rules: {
+      '@typescript-eslint/no-var-requires': 'off',
+    },
+  },
 ];

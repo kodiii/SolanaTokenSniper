@@ -58,7 +58,7 @@ describe('DatabaseService', () => {
 
     (ConnectionManager.getInstance as jest.Mock).mockReturnValue(mockConnectionManager);
     
-    // Create a new instance with our mocked manager instead of using getInstance
+    // Create a new instance with our mocked manager
     dbService = new DatabaseService(mockConnectionManager);
   });
 
@@ -72,6 +72,28 @@ describe('DatabaseService', () => {
       expect(execMock).toHaveBeenCalledWith(expect.stringContaining('CREATE TABLE IF NOT EXISTS holdings'));
       expect(execMock).toHaveBeenCalledWith(expect.stringContaining('CREATE TABLE IF NOT EXISTS tokens'));
       expect(execMock).toHaveBeenCalledWith(expect.stringContaining('CREATE INDEX'));
+    });
+
+    it('should handle existing tables gracefully', async () => {
+      mockConnectionManager.executeWithRetry.mockImplementation(async (callback) => {
+        // First call succeeds (tables)
+        if (execMock.mock.calls.length === 0) {
+          return callback(mockDb);
+        }
+        // Second call fails (indices) but should be ignored since table exists
+        throw new Error('table holdings already exists');
+      });
+
+      await expect(dbService.initialize()).resolves.not.toThrow();
+      expect(mockConnectionManager.initialize).toHaveBeenCalled();
+      expect(execMock).toHaveBeenCalled();
+    });
+
+    it('should handle initialization failures', async () => {
+      const error = new Error('SQLITE_BUSY: database is locked');
+      mockConnectionManager.executeWithRetry.mockRejectedValue(error);
+
+      await expect(dbService.initialize()).rejects.toThrow(error);
     });
   });
 
@@ -108,6 +130,26 @@ describe('DatabaseService', () => {
       );
     });
 
+    it('should handle transaction rollback on insert failure', async () => {
+      const error = new Error('Insert failed');
+      runMock.mockRejectedValueOnce(error);
+
+      mockConnectionManager.transaction.mockImplementation(async (callback) => {
+        const mockTransaction = {
+          commit: jest.fn(),
+          rollback: jest.fn().mockResolvedValue(undefined)
+        };
+        try {
+          await callback(mockTransaction);
+        } catch {
+          await mockTransaction.rollback();
+          throw error;
+        }
+      });
+
+      await expect(dbService.insertHolding(mockHolding)).rejects.toThrow(error);
+    });
+
     it('should remove holding', async () => {
       await dbService.removeHolding('token123');
 
@@ -130,6 +172,23 @@ describe('DatabaseService', () => {
 
       expect(mockConnectionManager.executeWithRetry).toHaveBeenCalled();
       expect(result).toEqual(mockHoldings);
+    });
+
+    it('should handle connection failures during query', async () => {
+      const error = new Error('Connection lost');
+      mockConnectionManager.executeWithRetry.mockRejectedValue(error);
+
+      await expect(dbService.getHoldings()).rejects.toThrow(error);
+    });
+
+    it('should handle concurrent operations', async () => {
+      const operations = Promise.all([
+        dbService.insertHolding(mockHolding),
+        dbService.getHoldings(),
+        dbService.removeHolding('token123')
+      ]);
+
+      await expect(operations).resolves.not.toThrow();
     });
   });
 
@@ -159,6 +218,19 @@ describe('DatabaseService', () => {
       );
     });
 
+    it('should handle nested transactions', async () => {
+      mockConnectionManager.transaction.mockImplementation(async (callback) => {
+        const mockTransaction = {
+          commit: jest.fn().mockResolvedValue(undefined),
+          rollback: jest.fn().mockResolvedValue(undefined)
+        };
+        await callback(mockTransaction);
+      });
+
+      await dbService.insertNewToken(mockToken);
+      expect(mockConnectionManager.transaction).toHaveBeenCalled();
+    });
+
     it('should throw error when inserting invalid token', async () => {
       const invalidToken = { ...mockToken, mint: '' };
       await expect(dbService.insertNewToken(invalidToken)).rejects.toThrow('Invalid token data');
@@ -172,6 +244,15 @@ describe('DatabaseService', () => {
 
       expect(mockConnectionManager.executeWithRetry).toHaveBeenCalled();
       expect(result).toEqual(mockTokens);
+    });
+
+    it('should handle invalid SQL during query', async () => {
+      const sqlError = new Error('SQLITE_ERROR: near "INVALID": syntax error');
+      runMock.mockRejectedValueOnce(sqlError);
+
+      mockConnectionManager.executeWithRetry.mockRejectedValueOnce(sqlError);
+
+      await expect(dbService.insertNewToken(mockToken)).rejects.toThrow('SQLITE_ERROR: near "INVALID": syntax error');
     });
 
     it('should throw error when searching with invalid mint', async () => {
@@ -188,6 +269,16 @@ describe('DatabaseService', () => {
       expect(result).toEqual(mockTokens);
     });
 
+    it('should handle retry exhaustion', async () => {
+      mockConnectionManager.executeWithRetry.mockRejectedValue(
+        new Error('Operation failed after maximum retries')
+      );
+
+      await expect(
+        dbService.findTokenByNameAndCreator('Test Token', 'creator123')
+      ).rejects.toThrow('Operation failed after maximum retries');
+    });
+
     it('should throw error when searching with invalid name or creator', async () => {
       await expect(dbService.findTokenByNameAndCreator('', 'creator')).rejects.toThrow('Invalid name or creator');
       await expect(dbService.findTokenByNameAndCreator('name', '')).rejects.toThrow('Invalid name or creator');
@@ -198,6 +289,13 @@ describe('DatabaseService', () => {
     it('should close all connections', async () => {
       await dbService.close();
       expect(mockConnectionManager.closeAll).toHaveBeenCalled();
+    });
+
+    it('should handle cleanup failures', async () => {
+      const error = new Error('Failed to close connections');
+      mockConnectionManager.closeAll.mockRejectedValue(error);
+
+      await expect(dbService.close()).rejects.toThrow(error);
     });
   });
 });

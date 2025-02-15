@@ -13,6 +13,7 @@ export class ConnectionManager {
   private inUse: Set<Database> = new Set();
   private maxConnections = 5;
   private connectionTimeout = 5000; // 5 seconds
+  private maxRetries = 2;
 
   private constructor() {}
 
@@ -28,9 +29,22 @@ export class ConnectionManager {
    */
   public async initialize(): Promise<void> {
     // Create initial connections
-    for (let i = 0; i < this.maxConnections; i++) {
-      const connection = await this.createConnection();
-      this.pool.push(connection);
+    let retryCount = 0;
+
+    while (this.pool.length < this.maxConnections) {
+      try {
+        const connection = await this.createConnection();
+        await connection.configure('busyTimeout', 3000);
+        this.pool.push(connection);
+      } catch (error) {
+        console.error('Failed to create connection:', error instanceof Error ? error.message : String(error));
+        retryCount++;
+        if (this.pool.length === 0 && retryCount > this.maxRetries) {
+          throw new Error('Failed to initialize connection pool');
+        }
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
   }
 
@@ -168,10 +182,11 @@ export class ConnectionManager {
 
       // Create a new connection
       const newConnection = await this.createConnection();
+      await newConnection.configure('busyTimeout', 3000);
       this.pool.push(newConnection);
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      console.error('Failed to recover database connection:', err);
+      console.error('Failed to recover database connection:', err.message);
       throw err;
     }
   }
@@ -185,7 +200,7 @@ export class ConnectionManager {
         try {
           await connection.close();
         } catch (error) {
-          console.error('Error closing connection:', error instanceof Error ? error : String(error));
+          console.error('Error closing connection:', error instanceof Error ? error.message : String(error));
         }
       })
     );
