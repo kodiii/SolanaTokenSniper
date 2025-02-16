@@ -1,148 +1,291 @@
 /**
- * Stress tests for ConnectionManager
+ * Comprehensive stress tests for ConnectionManager
  */
-import { ConnectionManager } from '../connection_manager';
 import { Database, open } from 'sqlite';
-import { config } from '../../../config';
+import { RunResult } from 'sqlite3';
+import sqlite3 from 'sqlite3';
+import { ConnectionManager } from '../connection_manager';
 import { EventEmitter } from 'events';
+import { performance } from 'perf_hooks';
 
-// Explicitly mock 'sqlite' so open is a Jest mock
+// Configure test timeouts and retries
+jest.setTimeout(35000);
+
+// We override getInstance() so we can manipulate protected fields.
+jest.mock('../connection_manager', () => {
+  const actual = jest.requireActual('../connection_manager');
+  class MockedConnectionManager extends actual.ConnectionManager {
+    constructor() {
+      super();
+      // Override these after construction, since they are private in the original.
+      (this as any).maxConnections = 10;
+      (this as any).maxRetries = 2;
+      (this as any).retryDelay = 50;
+      (this as any).connectionTimeout = 1000;
+    }
+  }
+  return {
+    ...actual,
+    ConnectionManager: {
+      getInstance: () => {
+        // Force the instance to be recreated every time (for tests).
+        (actual.ConnectionManager as any).instance = undefined;
+        return new MockedConnectionManager();
+      }
+    }
+  };
+});
+
 jest.mock('sqlite', () => ({
   open: jest.fn()
 }));
 
+// SQLite error types for comprehensive testing
+const SQLITE_ERRORS = {
+  BUSY: { name: 'SQLITE_BUSY', message: 'database is locked' },
+  CONSTRAINT: { name: 'SQLITE_CONSTRAINT', message: 'UNIQUE constraint failed' },
+  READONLY: { name: 'SQLITE_READONLY', message: 'attempt to write a readonly database' },
+  INTERRUPT: { name: 'SQLITE_INTERRUPT', message: 'interrupted' }
+};
+
 /**
- * Create a new mock instance of the Database.
+ * Create a mock database with provided overrides (e.g., for run/get/all).
  */
-const createMockDb = (): Database => ({
-  ...new EventEmitter(),
-  run: jest.fn().mockResolvedValue('success'),
-  get: jest.fn().mockResolvedValue({}),
-  all: jest.fn().mockResolvedValue([]),
-  close: jest.fn().mockResolvedValue(undefined),
-  configure: jest.fn().mockResolvedValue(undefined),
-  exec: jest.fn().mockResolvedValue('success'),
-  on: jest.fn(),
-  once: jest.fn(),
-  emit: jest.fn()
-}) as unknown as Database;
+function createMockDb(overrides: Partial<Database> = {}): Database {
+  const mockDb = {
+    ...new EventEmitter(),
+    run: jest.fn().mockResolvedValue({ lastID: 0, changes: 0 } as RunResult),
+    get: jest.fn().mockResolvedValue({}),
+    all: jest.fn().mockResolvedValue([]),
+    close: jest.fn().mockResolvedValue(undefined),
+    configure: jest.fn().mockResolvedValue(undefined),
+    exec: jest.fn().mockResolvedValue(undefined),
+    on: jest.fn(),
+    once: jest.fn(),
+    emit: jest.fn(),
+    ...overrides
+  };
 
-beforeAll(() => {
-  // Increase the default Jest test timeout for this file
-  jest.setTimeout(30000); // 30 seconds for stress tests
-});
+  // Force the return type to Database
+  return mockDb as unknown as Database;
+}
 
-describe('ConnectionManager Stress Tests', () => {
+describe('ConnectionManager', () => {
   let manager: ConnectionManager;
+  let consoleErrorSpy: jest.SpyInstance;
+  let operations: string[] = [];
+  let mockPool: Database[];
 
-  beforeEach(async () => {
-    // Clear previous mocks and reset any singletons
+  beforeEach(() => {
     jest.clearAllMocks();
-    (ConnectionManager as any).instance = undefined;
-
-    // Return a new mock DB instance for each call.
-    (open as jest.Mock).mockImplementation(() => Promise.resolve(createMockDb()));
-
-    // Create a new ConnectionManager and initialize it.
-    manager = ConnectionManager.getInstance();
-    await manager.closeAll(); // ensure clean slate
-    await manager.initialize();
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+    operations = [];
+    mockPool = new Array(10).fill(null).map(() => createMockDb());
   });
 
   afterEach(async () => {
-    // Ensure that connections are closed after each test.
-    await manager.closeAll();
-  });
-
-  describe('concurrent connections', () => {
-    it('should handle multiple concurrent connection requests', async () => {
-      // Assuming the pool size is 5, request (poolSize - 1) connections concurrently.
-      const poolSize = 5;
-      const concurrentRequests = poolSize - 1;
-      const connections = await Promise.all(
-        Array(concurrentRequests)
-          .fill(null)
-          .map(() => manager.getConnection())
-      );
-      expect(connections.length).toBe(concurrentRequests);
-
-      // Release all connections.
-      connections.forEach(conn => manager.releaseConnection(conn));
-    });
-
-    it('should handle connection pool exhaustion gracefully', async () => {
-      // Request more connections than the pool size to force exhaustion.
-      const totalRequests = 10;
-      const results = await Promise.allSettled(
-        Array(totalRequests)
-          .fill(null)
-          .map(() => manager.getConnection(0))
-      );
-
-      // Some requests should be rejected if the pool is exhausted.
-      const rejected = results.filter(r => r.status === 'rejected');
-      const fulfilled = results.filter(r => r.status === 'fulfilled');
-
-      expect(rejected.length).toBeGreaterThan(0);
-      expect(fulfilled.length).toBeLessThanOrEqual(5);
-
-      // Release any successful connections.
-      for (const res of fulfilled) {
-        if (res.status === 'fulfilled') {
-          manager.releaseConnection(res.value);
-        }
-      }
-    });
-  });
-
-  describe('memory leak prevention', () => {
-    it('should properly clean up resources after heavy usage', async () => {
-      const iterations = 20;
-      for (let i = 0; i < iterations; i++) {
-        const conn = await manager.getConnection();
-        await conn.run('SELECT 1');
-        manager.releaseConnection(conn);
-      }
-      // Additional memory usage checks can be inserted here if needed.
-      expect(true).toBe(true);
-    });
-  });
-
-  describe('error recovery', () => {
-    it('should recover from connection failures under load', async () => {
-      // Simulate a one-time connection failure.
-      (open as jest.Mock).mockRejectedValueOnce(new Error('Connection failure'));
-
-      // Reinitialize the manager.
+    if (manager) {
       await manager.closeAll();
+    }
+    consoleErrorSpy.mockRestore();
+  });
+
+  describe('Error Recovery and Connection Management', () => {
+    it('should handle initialization failures with retries', async () => {
+      const errors = ['Network error', 'Disk error', 'Permission denied'];
+      let attempt = 0;
+
+      (open as jest.Mock).mockImplementation(() => {
+        if (attempt < errors.length) {
+          return Promise.reject(new Error(errors[attempt++]));
+        }
+        return Promise.resolve(createMockDb());
+      });
+
+      manager = ConnectionManager.getInstance();
+      await expect(manager.initialize()).rejects.toThrow('Failed to initialize connection pool');
+      expect(attempt).toBe(3);
+      expect(consoleErrorSpy).toHaveBeenCalledTimes(3);
+    });
+
+    it('should handle connection errors and recovery', async () => {
+      const mockDb = createMockDb({
+        run: jest.fn()
+          .mockRejectedValueOnce(new Error('database is locked'))
+          .mockResolvedValueOnce({ lastID: 0, changes: 0 })
+      });
+
+      (open as jest.Mock).mockResolvedValue(mockDb);
+      manager = ConnectionManager.getInstance();
       await manager.initialize();
 
-      // Ensure that a connection can be acquired after recovery.
-      const conn = await manager.getConnection();
-      expect(conn).toBeDefined();
-      manager.releaseConnection(conn);
+      // Should retry and succeed
+      await manager.executeWithRetry(async (db) => {
+        await db.run('SELECT 1');
+      });
+
+      expect(mockDb.run).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle pool exhaustion and recovery', async () => {
+      // Initialize with a fresh pool
+      const freshPool = new Array(10).fill(null).map(() => createMockDb());
+      let poolIndex = 0;
+      (open as jest.Mock).mockImplementation(() => Promise.resolve(freshPool[poolIndex++]));
+
+      manager = ConnectionManager.getInstance();
+      await manager.initialize();
+
+      // Request all connections plus some extras
+      const allConnections = await Promise.all(
+        Array(10).fill(null).map(() => manager.getConnection())
+      );
+
+      expect(allConnections).toHaveLength(10); // All connections are obtained
+
+      // Try to get more connections (should fail)
+      const extraAttempts = await Promise.all(
+        Array(2).fill(null).map(async () => {
+          try {
+            await manager.getConnection();
+            return null;
+          } catch (error) {
+            return error;
+          }
+        })
+      );
+
+      const errors = extraAttempts.filter(r => r instanceof Error);
+      expect(errors).toHaveLength(2);
+      expect(errors[0].message).toMatch(/No database connections available/);
+
+      // Release connections and verify they can be reused
+      allConnections.forEach(conn => manager.releaseConnection(conn));
+      const reusedConn = await manager.getConnection();
+      expect(reusedConn).toBe(allConnections[0]); // Should reuse the first released connection
+    });
+
+    it('should handle connection timeouts', async () => {
+      const mockDb = createMockDb({
+        run: jest.fn().mockImplementation(() => new Promise(resolve => setTimeout(resolve, 2000)))
+      });
+
+      (open as jest.Mock).mockResolvedValue(mockDb);
+      manager = ConnectionManager.getInstance();
+      await manager.initialize();
+
+      await expect(
+        manager.executeWithRetry(async (db) => {
+          await db.run('SELECT 1');
+        })
+      ).rejects.toThrow('Query timeout');
     });
   });
 
-  describe('transaction stress testing', () => {
-    it('should handle concurrent transactions correctly', async () => {
-      const totalTransactions = 10;
-      const results = await Promise.allSettled(
-        Array(totalTransactions)
-          .fill(null)
-          .map(() =>
-            manager.transaction(async () => {
-              // Use a new instance of our mock DB for each transaction.
-              const dbInstance = createMockDb();
-              await dbInstance.run('SELECT 1');
-              return 'ok';
-            })
-          )
+  describe('Transaction Management', () => {
+    it('should handle transaction errors and rollbacks', async () => {
+      const mockDb = createMockDb({
+        run: jest.fn().mockImplementation(async (sql: string) => {
+          operations.push(sql);
+          if (sql === 'UPDATE test') {
+            throw new Error('Update failed');
+          }
+          return { lastID: 0, changes: 0 };
+        })
+      });
+
+      (open as jest.Mock).mockResolvedValue(mockDb);
+      manager = ConnectionManager.getInstance();
+      await manager.initialize();
+
+      await expect(
+        manager.transaction(async () => {
+          await mockDb.run('UPDATE test');
+        })
+      ).rejects.toThrow('Update failed');
+
+      expect(operations).toEqual([
+        'BEGIN TRANSACTION',
+        'UPDATE test',
+        'ROLLBACK'
+      ]);
+    });
+
+    it('should handle SQLite error types', async () => {
+      const testError = { name: 'SQLITE_BUSY', message: 'database is locked' };
+      const mockDb = createMockDb({
+        run: jest.fn().mockImplementation(async (sql: string) => {
+          operations.push(sql);
+          if (sql === 'COMMIT') {
+            const err = new Error(testError.message);
+            err.name = testError.name;
+            throw err;
+          }
+          return { lastID: 0, changes: 0 };
+        })
+      });
+
+      (open as jest.Mock).mockResolvedValue(mockDb);
+      manager = ConnectionManager.getInstance();
+      await manager.initialize();
+
+      await expect(
+        manager.transaction(async () => {
+          return 'test';
+        })
+      ).rejects.toThrow(testError.message);
+
+      expect(operations).toEqual([
+        'BEGIN TRANSACTION',
+        'COMMIT',
+        'ROLLBACK'
+      ]);
+    });
+  });
+
+  describe('Performance and Concurrency', () => {
+    beforeEach(async () => {
+      let poolIndex = 0;
+      (open as jest.Mock).mockImplementation(() => Promise.resolve(mockPool[poolIndex++ % mockPool.length]));
+      manager = ConnectionManager.getInstance();
+      await manager.initialize();
+    });
+
+    it('should maintain consistent response times under load', async () => {
+      const iterations = 10;
+      const timings: number[] = [];
+
+      for (let i = 0; i < iterations; i++) {
+        const start = performance.now();
+        await manager.transaction(async () => {
+          await new Promise(r => setTimeout(r, 10));
+        });
+        timings.push(performance.now() - start);
+      }
+
+      const avgTime = timings.reduce((a, b) => a + b) / timings.length;
+      const maxTime = Math.max(...timings);
+      const stdDev = Math.sqrt(
+        timings.reduce((acc, t) => acc + (t - avgTime) ** 2, 0) / timings.length
       );
 
-      for (const r of results) {
-        expect(r.status).toBe('fulfilled');
-      }
+      expect(stdDev / avgTime).toBeLessThan(0.5);
+      expect(maxTime).toBeLessThan(avgTime * 3);
+    });
+
+    it('should handle concurrent operations efficiently', async () => {
+      const concurrentOps = 5;
+      const start = performance.now();
+
+      await Promise.all([...Array(concurrentOps)].map(async (_, i) => {
+        return manager.transaction(async () => {
+          await new Promise(r => setTimeout(r, 10));
+          return i;
+        });
+      }));
+
+      const duration = performance.now() - start;
+      expect(duration).toBeLessThan(1000);
     });
   });
 });

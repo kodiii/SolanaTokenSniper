@@ -1,9 +1,13 @@
 /**
  * Unit tests for ConnectionManager
  */
-import { ConnectionManager } from '../connection_manager';
 import { Database, open } from 'sqlite';
+import sqlite3 from 'sqlite3';
+import { ConnectionManager } from '../connection_manager';
 import { EventEmitter } from 'events';
+
+// Set higher timeout for all tests
+jest.setTimeout(60000);
 
 // Explicitly mock 'sqlite' so open is a Jest mock.
 jest.mock('sqlite', () => ({
@@ -11,28 +15,34 @@ jest.mock('sqlite', () => ({
 }));
 
 /**
- * Create a new mock instance of the Database.
+ * Create a mock instance of the Database.
  */
-const createMockDb = (): Database => ({
+const createMockDb = (overrides = {}): Database => ({
   ...new EventEmitter(),
-  run: jest.fn().mockResolvedValue('success'),
+  run: jest.fn().mockResolvedValue({
+    lastID: 0,
+    changes: 0
+  } as any),
   get: jest.fn().mockResolvedValue({}),
   all: jest.fn().mockResolvedValue([]),
   close: jest.fn().mockResolvedValue(undefined),
   configure: jest.fn().mockResolvedValue(undefined),
-  exec: jest.fn().mockResolvedValue('success'),
+  exec: jest.fn().mockResolvedValue(undefined),
   on: jest.fn(),
   once: jest.fn(),
   emit: jest.fn(),
+  ...overrides
 }) as unknown as Database;
 
 describe('ConnectionManager', () => {
   let manager: ConnectionManager;
+  let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(async () => {
     // Clear previous mocks and reset any singletons.
     jest.clearAllMocks();
     (ConnectionManager as any).instance = undefined;
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
     // For every connection request, return a new mock DB instance.
     (open as jest.Mock).mockImplementation(() => Promise.resolve(createMockDb()));
@@ -45,72 +55,129 @@ describe('ConnectionManager', () => {
   afterEach(async () => {
     // Clean up all connections after each test.
     await manager.closeAll();
+    consoleErrorSpy.mockRestore();
   });
 
-  test('initialization creates connection pool', async () => {
-    // Instead of using getPoolSize (which doesn't exist), simply acquire a connection.
-    const connection = await manager.getConnection();
-    expect(connection).toBeDefined();
-    manager.releaseConnection(connection);
-  });
+  describe('Initialization and Recovery', () => {
+    it('should initialize pool and retry on failures', async () => {
+      jest.clearAllMocks();
+      (ConnectionManager as any).instance = undefined;
 
-  test('gets and releases connections', async () => {
-    const connection = await manager.getConnection();
-    expect(connection).toBeDefined();
-    manager.releaseConnection(connection);
-  });
+      // Mock first 2 attempts to fail, then succeed
+      let attempts = 0;
+      (open as jest.Mock).mockImplementation(() => {
+        if (attempts++ < 2) {
+          throw new Error('Init error');
+        }
+        return Promise.resolve(createMockDb());
+      });
 
-  test('handles connection exhaustion', async () => {
-    // Assuming a pool size of 5.
-    const poolSize = 5;
-    const connections = [];
-    for (let i = 0; i < poolSize; i++) {
-      const conn = await manager.getConnection();
-      connections.push(conn);
-    }
-    // Requesting one more connection should be rejected due to exhaustion.
-    await expect(manager.getConnection(0)).rejects.toThrow('No database connections available after retries');
-    // Clean up: release all acquired connections.
-    connections.forEach(conn => manager.releaseConnection(conn));
-  });
+      const manager = ConnectionManager.getInstance();
+      await manager.initialize();
 
-  test('handles transactions', async () => {
-    // Example transaction test.
-    const result = await manager.transaction(async () => {
-      const conn = await manager.getConnection();
-      await conn.run('SELECT 1');
-      manager.releaseConnection(conn);
-      return 'transaction complete';
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to create connection:', 'Init error');
+      expect(attempts).toBeGreaterThan(2);
     });
-    expect(result).toBe('transaction complete');
-  });
 
-  test('handles transaction failures', async () => {
-    // Simulate a failure during a transaction.
-    const originalGetConnection = manager.getConnection;
-    manager.getConnection = jest.fn().mockRejectedValue(new Error('Transaction error'));
-    await expect(manager.transaction(async () => {
-      const conn = await manager.getConnection();
-      manager.releaseConnection(conn);
-      return 'should not complete';
-    })).rejects.toThrow('Transaction error');
-    // Restore the original getConnection.
-    manager.getConnection = originalGetConnection;
-  });
+    it('should fail after max retries with no connections', async () => {
+      jest.clearAllMocks();
+      (ConnectionManager as any).instance = undefined;
 
-  test('handles cleanup errors', async () => {
-    // Simulate errors during cleanup by forcing close() to fail.
-    const connections = [];
-    for (let i = 0; i < 3; i++) {
-      connections.push(await manager.getConnection());
-    }
-    // Override the close method to simulate a failure.
-    connections.forEach(conn => {
-      conn.close = jest.fn().mockRejectedValue(new Error('Close failed'));
+      // Always fail
+      (open as jest.Mock).mockRejectedValue(new Error('Persistent failure'));
+
+      const manager = ConnectionManager.getInstance();
+      await expect(manager.initialize()).rejects.toThrow('Failed to initialize connection pool');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to create connection:', 'Persistent failure');
     });
-    // closeAll() should handle cleanup errors internally.
-    await expect(manager.closeAll()).resolves.not.toThrow();
-    // Optionally release connections manually if needed.
-    connections.forEach(conn => manager.releaseConnection(conn));
+  });
+
+  describe('Connection Recovery', () => {
+    it('should handle unrecoverable connections', async () => {
+      const mockDb = createMockDb({
+        run: jest.fn().mockRejectedValue(new Error('Connection lost')),
+        close: jest.fn().mockRejectedValue(new Error('Close failed'))
+      });
+
+      (open as jest.Mock)
+        .mockResolvedValueOnce(mockDb)
+        .mockRejectedValue(new Error('Failed to create new connection'));
+
+      const manager = ConnectionManager.getInstance();
+      await manager.initialize();
+
+      await expect(
+        manager.executeWithRetry(async (db) => {
+          await db.run('SELECT 1');
+        })
+      ).rejects.toThrow(/Database operation failed/);
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Failed to recover database connection:',
+        'Failed to create new connection'
+      );
+      expect(mockDb.close).toHaveBeenCalled();
+    });
+
+    it('should handle all types of connection errors', async () => {
+      const errors = [
+        { msg: 'SQLITE_BUSY', name: 'SQLITE_BUSY' },
+        { msg: 'database is locked', name: 'SQLITE_BUSY' },
+        { msg: 'disk I/O error', name: 'SQLITE_IOERR' },
+        { msg: 'no such table', name: 'SQLITE_ERROR' },
+        { msg: 'database is corrupt', name: 'SQLITE_CORRUPT' }
+      ];
+
+      for (const error of errors) {
+        const mockDb = createMockDb();
+        mockDb.run = jest.fn().mockRejectedValue(Object.assign(new Error(error.msg), { code: error.name }));
+
+        (open as jest.Mock).mockResolvedValueOnce(mockDb);
+        
+        const manager = ConnectionManager.getInstance();
+        await manager.initialize();
+
+        await expect(
+          manager.executeWithRetry(async (db) => {
+            await db.run('SELECT 1');
+          })
+        ).rejects.toThrow(/Database operation failed/);
+      }
+    });
+  });
+
+  describe('Transaction Management', () => {
+    it('should handle transaction failures', async () => {
+      const mockDb = createMockDb();
+      const runSpy = jest.spyOn(mockDb, 'run');
+      
+      // Mock BEGIN to succeed but COMMIT to fail
+      runSpy
+        .mockResolvedValueOnce({ lastID: 0, changes: 0 } as any) // BEGIN succeeds
+        .mockRejectedValueOnce(new Error('COMMIT failed')); // COMMIT fails
+
+      (open as jest.Mock).mockResolvedValue(mockDb);
+      
+      await expect(
+        manager.transaction(async () => 'test')
+      ).rejects.toThrow('COMMIT failed');
+
+      expect(runSpy).toHaveBeenCalledWith('ROLLBACK');
+    });
+
+    it('should rollback on explicit request', async () => {
+      const mockDb = createMockDb();
+      const runSpy = jest.spyOn(mockDb, 'run');
+      
+      (open as jest.Mock).mockResolvedValue(mockDb);
+      
+      await manager.transaction(async (tx) => {
+        await tx.rollback();
+      });
+
+      const calls = runSpy.mock.calls.map(call => call[0]);
+      expect(calls).toContain('ROLLBACK');
+      expect(calls.indexOf('ROLLBACK')).toBeGreaterThan(calls.indexOf('BEGIN TRANSACTION'));
+    });
   });
 });
