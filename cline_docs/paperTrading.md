@@ -85,6 +85,30 @@ When a token is detected and passes the rug check validations, the paper trading
    ```
 4. Use the real-time price from such responses to calculate the cost, fees, slippage, and hence the simulated PNL.
 
+## Monitoring and Analysis
+
+### 1. CLI Dashboard
+The paper trading system includes a command-line dashboard for real-time monitoring:
+
+- **Access:** Run `npm run dashboard` to launch the monitoring interface
+- **Features:**
+  * Real-time virtual balance display
+  * Active positions with current prices and PNL
+  * Transaction history with timestamps
+  * Auto-refreshes every 30 seconds
+- **Visual Indicators:**
+  * Color-coded profits (green) and losses (red)
+  * Clear display of stop-loss and take-profit levels
+  * Transaction type indicators (buy/sell)
+
+### 2. Data Tracking
+The dashboard provides real-time insights into:
+- Current portfolio value
+- Individual token performance
+- Transaction history
+- Fee calculations and impact
+- Stop-loss and take-profit status
+
 ## Summary
 
 - **Virtual Balance:** Initial virtual SOL balance for simulation.
@@ -92,5 +116,6 @@ When a token is detected and passes the rug check validations, the paper trading
 - **Database:** Use `src/tracker/paper_trading.db` to store simulated transactions and portfolio data.
 - **Integration:** Toggle via `rug_check.simulation_mode` with verbose logging through `rug_check.verbose_log`.
 - **Operation:** When a token passes the rug check, execute a simulated buy using the fixed buy amount (`"10000000"`) based on the real price from Dexscreener.
+- **Monitoring:** Access real-time performance data through the CLI dashboard using `npm run dashboard`.
 
 This specification provides a clear and detailed plan for implementing paper trading mode in the Solana Token Sniper project.

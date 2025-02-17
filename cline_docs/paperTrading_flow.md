@@ -126,6 +126,17 @@ sequenceDiagram
    - Maintains virtual balance records
    - Tracks simulated portfolio
 
+5. **CLI Dashboard**
+   - Command: `npm run dashboard`
+   - Real-time monitoring features:
+     * Current virtual balance display
+     * Active positions with PNL tracking
+     * Recent trade history
+     * Auto-refreshes every 30 seconds
+   - Color-coded output:
+     * Green for profits and buy orders
+     * Red for losses and sell orders
+
 ## Integration Points
 
 1. **External Price Data**
@@ -143,4 +154,26 @@ sequenceDiagram
    - Logging: `rug_check.verbose_log`
    - Uses existing fee structures
 
-This flow ensures that paper trading closely mimics real trading behavior while maintaining separate data storage and preventing any real transactions from occurring.
+## Monitoring and Analysis
+
+1. **CLI Dashboard Usage**
+   - Start dashboard: `npm run dashboard`
+   - View portfolio performance:
+     * Current SOL balance
+     * Active token positions
+     * Buy/Sell prices
+     * PNL calculations
+     * Stop-loss/Take-profit levels
+   - Monitor recent transactions:
+     * Transaction timestamps
+     * Trade types (buy/sell)
+     * Token amounts and prices
+     * Fee calculations
+
+2. **Real-time Updates**
+   - Dashboard auto-refreshes every 30 seconds
+   - Shows latest price data from Dexscreener
+   - Tracks position PNL in real-time
+   - Displays active stop-loss and take-profit orders
+
+This flow ensures that paper trading closely mimics real trading behavior while maintaining separate data storage and preventing any real transactions from occurring. The CLI dashboard provides real-time insights into trading performance and portfolio status.

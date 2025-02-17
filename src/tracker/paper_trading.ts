@@ -1,10 +1,9 @@
 import * as sqlite3 from "sqlite3";
-import { open } from "sqlite";
+import { ConnectionManager } from "./db/connection_manager";
 import { config } from "../config";
 
 const DB_PATH = "src/tracker/paper_trading.db";
 
-// Paper trading database structure
 interface VirtualBalance {
   balance_sol: number;
   updated_at: number;
@@ -34,11 +33,10 @@ interface TokenTracking {
 
 // Create tables
 export async function initializePaperTradingDB(): Promise<boolean> {
+  const connectionManager = ConnectionManager.getInstance(DB_PATH);
   try {
-    const db = await open({
-      filename: DB_PATH,
-      driver: sqlite3.Database
-    });
+    await connectionManager.initialize();
+    const db = await connectionManager.getConnection();
 
     // Virtual balance table
     await db.exec(`
@@ -79,16 +77,19 @@ export async function initializePaperTradingDB(): Promise<boolean> {
       );
     `);
 
-    // Initialize virtual balance if not exists
-    const balance = await db.get('SELECT * FROM virtual_balance LIMIT 1');
-    if (!balance) {
+    // Get current balance
+    const balance = await db.get('SELECT * FROM virtual_balance ORDER BY id DESC LIMIT 1');
+    
+    // Initialize or update balance if it doesn't match config
+    if (!balance || balance.balance_sol !== config.paper_trading.initial_balance) {
       await db.run(
         'INSERT INTO virtual_balance (balance_sol, updated_at) VALUES (?, ?)',
-        [10, Date.now()] // Initialize with 10 SOL
+        [config.paper_trading.initial_balance, Date.now()]
       );
+      console.log(`🎮 Paper Trading balance set to ${config.paper_trading.initial_balance} SOL`);
     }
 
-    await db.close();
+    connectionManager.releaseConnection(db);
     return true;
   } catch (error) {
     console.error('Error initializing paper trading database:', error);
@@ -97,15 +98,11 @@ export async function initializePaperTradingDB(): Promise<boolean> {
 }
 
 export async function getVirtualBalance(): Promise<VirtualBalance | null> {
+  const connectionManager = ConnectionManager.getInstance(DB_PATH);
   try {
-    const db = await open({
-      filename: DB_PATH,
-      driver: sqlite3.Database
-    });
-
+    const db = await connectionManager.getConnection();
     const balance = await db.get('SELECT * FROM virtual_balance ORDER BY id DESC LIMIT 1');
-    await db.close();
-
+    connectionManager.releaseConnection(db);
     return balance as VirtualBalance;
   } catch (error) {
     console.error('Error getting virtual balance:', error);
@@ -114,60 +111,60 @@ export async function getVirtualBalance(): Promise<VirtualBalance | null> {
 }
 
 export async function recordSimulatedTrade(trade: SimulatedTrade): Promise<boolean> {
+  const connectionManager = ConnectionManager.getInstance(DB_PATH);
   try {
-    const db = await open({
-      filename: DB_PATH,
-      driver: sqlite3.Database
+    const db = await connectionManager.getConnection();
+
+    await connectionManager.transaction(async (transaction) => {
+      await db.run(
+        `INSERT INTO simulated_trades (timestamp, token_mint, token_name, amount_sol, amount_token, price_per_token, type, fees)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [trade.timestamp, trade.token_mint, trade.token_name, trade.amount_sol, trade.amount_token, trade.price_per_token, trade.type, trade.fees]
+      );
+
+      // Update virtual balance
+      const currentBalance = await getVirtualBalance();
+      if (currentBalance) {
+        const newBalance = trade.type === 'buy' 
+          ? currentBalance.balance_sol - (trade.amount_sol + trade.fees)
+          : currentBalance.balance_sol + (trade.amount_sol - trade.fees);
+
+        await db.run(
+          'INSERT INTO virtual_balance (balance_sol, updated_at) VALUES (?, ?)',
+          [newBalance, Date.now()]
+        );
+      }
+
+      // Update token tracking
+      if (trade.type === 'buy') {
+        await db.run(
+          `INSERT INTO token_tracking 
+           (token_mint, token_name, amount, buy_price, current_price, last_updated, stop_loss, take_profit)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(token_mint) DO UPDATE SET
+           amount = amount + ?,
+           current_price = ?,
+           last_updated = ?`,
+          [
+            trade.token_mint,
+            trade.token_name,
+            trade.amount_token,
+            trade.price_per_token,
+            trade.price_per_token,
+            trade.timestamp,
+            trade.price_per_token * (1 - config.sell.stop_loss_percent/100),
+            trade.price_per_token * (1 + config.sell.take_profit_percent/100),
+            trade.amount_token,
+            trade.price_per_token,
+            trade.timestamp
+          ]
+        );
+      } else {
+        await db.run('DELETE FROM token_tracking WHERE token_mint = ?', [trade.token_mint]);
+      }
     });
 
-    await db.run(
-      `INSERT INTO simulated_trades (timestamp, token_mint, token_name, amount_sol, amount_token, price_per_token, type, fees)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [trade.timestamp, trade.token_mint, trade.token_name, trade.amount_sol, trade.amount_token, trade.price_per_token, trade.type, trade.fees]
-    );
-
-    // Update virtual balance
-    const currentBalance = await getVirtualBalance();
-    if (currentBalance) {
-      const newBalance = trade.type === 'buy' 
-        ? currentBalance.balance_sol - (trade.amount_sol + trade.fees)
-        : currentBalance.balance_sol + (trade.amount_sol - trade.fees);
-
-      await db.run(
-        'INSERT INTO virtual_balance (balance_sol, updated_at) VALUES (?, ?)',
-        [newBalance, Date.now()]
-      );
-    }
-
-    // Update token tracking
-    if (trade.type === 'buy') {
-      await db.run(
-        `INSERT INTO token_tracking 
-         (token_mint, token_name, amount, buy_price, current_price, last_updated, stop_loss, take_profit)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT(token_mint) DO UPDATE SET
-         amount = amount + ?,
-         current_price = ?,
-         last_updated = ?`,
-        [
-          trade.token_mint,
-          trade.token_name,
-          trade.amount_token,
-          trade.price_per_token,
-          trade.price_per_token,
-          trade.timestamp,
-          trade.price_per_token * (1 - config.sell.stop_loss_percent/100),
-          trade.price_per_token * (1 + config.sell.take_profit_percent/100),
-          trade.amount_token,
-          trade.price_per_token,
-          trade.timestamp
-        ]
-      );
-    } else {
-      await db.run('DELETE FROM token_tracking WHERE token_mint = ?', [trade.token_mint]);
-    }
-
-    await db.close();
+    connectionManager.releaseConnection(db);
     return true;
   } catch (error) {
     console.error('Error recording simulated trade:', error);
@@ -176,12 +173,10 @@ export async function recordSimulatedTrade(trade: SimulatedTrade): Promise<boole
 }
 
 export async function updateTokenPrice(tokenMint: string, currentPrice: number): Promise<TokenTracking | null> {
+  const connectionManager = ConnectionManager.getInstance(DB_PATH);
   try {
-    const db = await open({
-      filename: DB_PATH,
-      driver: sqlite3.Database
-    });
-
+    const db = await connectionManager.getConnection();
+    
     await db.run(
       `UPDATE token_tracking 
        SET current_price = ?, last_updated = ?
@@ -194,7 +189,7 @@ export async function updateTokenPrice(tokenMint: string, currentPrice: number):
       [tokenMint]
     );
 
-    await db.close();
+    connectionManager.releaseConnection(db);
     return token as TokenTracking;
   } catch (error) {
     console.error('Error updating token price:', error);
@@ -203,14 +198,11 @@ export async function updateTokenPrice(tokenMint: string, currentPrice: number):
 }
 
 export async function getTrackedTokens(): Promise<TokenTracking[]> {
+  const connectionManager = ConnectionManager.getInstance(DB_PATH);
   try {
-    const db = await open({
-      filename: DB_PATH,
-      driver: sqlite3.Database
-    });
-
+    const db = await connectionManager.getConnection();
     const tokens = await db.all('SELECT * FROM token_tracking');
-    await db.close();
+    connectionManager.releaseConnection(db);
     return tokens as TokenTracking[];
   } catch (error) {
     console.error('Error getting tracked tokens:', error);

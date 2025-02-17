@@ -2,6 +2,8 @@ import { Database, open } from 'sqlite';
 import * as sqlite3 from 'sqlite3';
 import { config } from '../../config';
 
+const DB_PATH = "src/tracker/paper_trading.db";
+
 export interface DatabaseTransaction {
   commit(): Promise<void>;
   rollback(): Promise<void>;
@@ -15,12 +17,15 @@ export class ConnectionManager {
   private connectionTimeout = 5000; // 5 seconds
   private maxRetries = 2;
   private retryDelay = 1000; // 1 second default delay
+  private dbPath: string;
 
-  private constructor() {}
+  private constructor(dbPath: string) {
+    this.dbPath = dbPath;
+  }
 
-  public static getInstance(): ConnectionManager {
+  public static getInstance(dbPath: string = DB_PATH): ConnectionManager {
     if (!ConnectionManager.instance) {
-      ConnectionManager.instance = new ConnectionManager();
+      ConnectionManager.instance = new ConnectionManager(dbPath);
     }
     return ConnectionManager.instance;
   }
@@ -153,7 +158,7 @@ export class ConnectionManager {
    */
   private async createConnection(): Promise<Database> {
     return open({
-      filename: config.swap.db_name_tracker_holdings,
+      filename: this.dbPath,
       driver: sqlite3.Database
     });
   }

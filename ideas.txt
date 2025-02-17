@@ -36,3 +36,30 @@ For sell operations as we are only faking the transactions using real current pr
 - Support verbose logging via `rug_check.verbose_log`
 
 
+follow the custom instructions and check the next step in @/cline_docs/progress.md and provide a full plan for implementation
+
+
+🔓 WebSocket is open and listening.
+✅ Subscription confirmed
+=============================================
+🔎 New Liquidity Pool found.
+🔃 Fetching transaction details ...
+Waiting 1 seconds for transaction to be confirmed...
+Attempt 1 of 5 to fetch transaction details...
+Attempt 1 failed: Response data array is empty
+Waiting 6 seconds before next attempt...
+Attempt 2 of 5 to fetch transaction details...
+Attempt 2 failed: Response data array is empty
+Waiting 9 seconds before next attempt...
+Attempt 3 of 5 to fetch transaction details...
+Successfully fetched transaction details!
+SOL Token Account: So11111111111111111111111111111111111111112
+New Token Account: 9B5R1fVSeScDS5RkrL6PqqF5TsDKPtgXCrwnXrLrYniA
+PHOTON TRACKER: https://photon-sol.tinyastro.io/en/lp/9B5R1fVSeScDS5RkrL6PqqF5TsDKPtgXCrwnXrLrYniA
+DEXSCREENER TRACKER: https://dexscreener.com/solana/9B5R1fVSeScDS5RkrL6PqqF5TsDKPtgXCrwnXrLrYniA
+Token found
+👽 GMGN: https://gmgn.ai/sol/token/9B5R1fVSeScDS5RkrL6PqqF5TsDKPtgXCrwnXrLrYniA
+😈 BullX: https://neo.bullx.io/terminal?chainId=1399811149&address=9B5R1fVSeScDS5RkrL6PqqF5TsDKPtgXCrwnXrLrYniA
+🎮 Paper Trading Mode: Simulating trade for new token
+❌ Could not fetch token price for paper trading
+🟢 Resuming looking for new tokens..

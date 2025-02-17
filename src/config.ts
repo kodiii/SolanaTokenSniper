@@ -42,6 +42,9 @@
  * This can be risky, as if these providers decide to withdraw their funds, it could destabilize the market.
  **/
 export const config = {
+  paper_trading: {
+    initial_balance: 1, // Initial paper trading balance in SOL
+  },
   liquidity_pool: {
     radiyum_program_id: "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
     wsol_pc_mint: "So11111111111111111111111111111111111111112",
@@ -90,7 +93,7 @@ export const config = {
     allow_freeze_authority: false, // The freeze authority is the address that can freeze token transfers, effectively locking up funds. Strongly Advised to set to false
     allow_rugged: false,
     // Critical
-    allow_mutable: false,
+    allow_mutable: true,
     block_returning_token_names: true,
     block_returning_token_creators: true,
     block_symbols: ["XXX"],
@@ -98,24 +101,26 @@ export const config = {
     only_contain_string: false, // Enable/disable string containment filter
     contain_string: ["AI", "GPT", "AGENT"], // Strings to match in token names (case insensitive)
     allow_insider_topholders: false, // Allow inseder accounts to be part of the topholders
-    max_alowed_pct_topholders: 15, // Max allowed percentage an individual topholder might hold
-    max_alowed_pct_all_topholders: 30, // Max allowed totalpercentage all topholders in total might hold related to supply
+    max_alowed_pct_topholders: 50, // Max allowed percentage an individual topholder might hold
+    max_alowed_pct_all_topholders: 50, // Max allowed totalpercentage all topholders in total might hold related to supply
     exclude_lp_from_topholders: true, // If true, Liquidity Pools will not be seen as top holders
     // Warning
     min_total_markets: 0,
     min_total_lp_providers: 0,
-    min_total_market_Liquidity: 10000,
+    min_total_market_Liquidity: 5000,
     // Misc
-    ignore_pump_fun: true,
-    max_score: 11400, // Set to 0 to ignore
+    ignore_pump_fun: false,
+    max_score: 20000, // Set to 0 to ignore
     legacy_not_allowed: [
       //"Low Liquidity",
       "Freeze Authority still enabled",
-      //"Single holder ownership",
-      "High holder concentration",
+      "Single holder ownership",
+      //"High holder concentration",
       "Freeze Authority still enabled",
       //"Large Amount of LP Unlocked",
       //"Low Liquidity",
+      "Copycat token",
+      //"Low amount of LP Providers",
     ],
   },
 };

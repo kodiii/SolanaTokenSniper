@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Solana token sniper bot",
   "main": "dist/index.js",
-  "type": "module",
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
@@ -12,6 +11,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
+    "dashboard": "ts-node src/cli/paper-trading-dashboard.ts",
     "lint": "eslint . --ext .ts"
   },
   "keywords": [
@@ -22,11 +22,16 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@project-serum/anchor": "^0.26.0",
     "@solana/web3.js": "^1.87.6",
+    "@types/axios": "^0.14.4",
     "@types/sqlite3": "^3.1.11",
+    "bs58": "^6.0.0",
+    "chalk": "^4.1.2",
     "dotenv": "^16.3.1",
     "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.6"
+    "sqlite3": "^5.1.6",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
