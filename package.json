@@ -12,6 +12,7 @@
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "dashboard": "ts-node src/cli/paper-trading-dashboard.ts",
+    "reset-paper": "ts-node src/cli/paper-trading-dashboard.ts --reset",
     "lint": "eslint . --ext .ts"
   },
   "keywords": [

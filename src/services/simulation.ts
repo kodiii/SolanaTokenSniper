@@ -20,8 +20,6 @@ interface DexscreenerPriceResponse {
 export class SimulationService {
   private static instance: SimulationService;
   private priceCheckInterval: NodeJS.Timeout | null = null;
-  private maxPriceRetries = 5;
-  private initialRetryDelay = 5000; // 5 seconds
 
   private constructor() {
     // Initialize the paper trading database
@@ -64,7 +62,9 @@ export class SimulationService {
 
   public async getTokenPrice(tokenMint: string, retryCount = 0): Promise<number | null> {
     try {
-      console.log(`🔍 Fetching price for token: ${tokenMint}${retryCount > 0 ? ` (Attempt ${retryCount + 1}/${this.maxPriceRetries})` : ''}`);
+      const attempt = retryCount + 1;
+      console.log(`🔍 Fetching price for token: ${tokenMint}${attempt > 1 ? ` (Attempt ${attempt}/${config.paper_trading.price_check.max_retries})` : ''}`);
+      
       const response = await axios.get<DexscreenerPriceResponse>(
         `https://api.dexscreener.com/latest/dex/tokens/${tokenMint}`,
         { timeout: config.tx.get_timeout }
@@ -79,8 +79,11 @@ export class SimulationService {
       }
 
       // If we haven't exceeded max retries and response indicates no pairs yet
-      if (retryCount < this.maxPriceRetries) {
-        const delayMs = this.initialRetryDelay * Math.pow(2, retryCount); // Exponential backoff
+      if (retryCount < config.paper_trading.price_check.max_retries - 1) {
+        const delayMs = Math.min(
+          config.paper_trading.price_check.initial_delay * Math.pow(1.5, retryCount),
+          config.paper_trading.price_check.max_delay
+        );
         console.log(`⏳ No price data yet, retrying in ${delayMs/1000} seconds...`);
         await this.delay(delayMs);
         return this.getTokenPrice(tokenMint, retryCount + 1);
@@ -98,9 +101,12 @@ export class SimulationService {
         });
 
         // If we haven't exceeded max retries and it's a potentially temporary error
-        if (retryCount < this.maxPriceRetries && 
+        if (retryCount < config.paper_trading.price_check.max_retries - 1 && 
             (error.response?.status === 429 || error.response?.status === 503)) {
-          const delayMs = this.initialRetryDelay * Math.pow(2, retryCount);
+          const delayMs = Math.min(
+            config.paper_trading.price_check.initial_delay * Math.pow(1.5, retryCount),
+            config.paper_trading.price_check.max_delay
+          );
           console.log(`⏳ API error, retrying in ${delayMs/1000} seconds...`);
           await this.delay(delayMs);
           return this.getTokenPrice(tokenMint, retryCount + 1);
