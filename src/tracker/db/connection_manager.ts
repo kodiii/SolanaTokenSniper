@@ -14,6 +14,7 @@ export class ConnectionManager {
   private maxConnections = 5;
   private connectionTimeout = 5000; // 5 seconds
   private maxRetries = 2;
+  private retryDelay = 1000; // 1 second default delay
 
   private constructor() {}
 
@@ -43,7 +44,7 @@ export class ConnectionManager {
           throw new Error('Failed to initialize connection pool');
         }
         // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, this.retryDelay));
       }
     }
   }
@@ -62,7 +63,7 @@ export class ConnectionManager {
 
     // If pool is full and no connections available, wait and retry
     if (retries > 0) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, this.retryDelay));
       return this.getConnection(retries - 1);
     }
 
@@ -138,9 +139,9 @@ export class ConnectionManager {
         this.releaseConnection(connection);
       }
 
-      // Wait before retrying
+      // Wait before retrying with exponential backoff
       if (attempt < retries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
+        await new Promise(resolve => setTimeout(resolve, this.retryDelay * Math.pow(2, attempt)));
       }
     }
 

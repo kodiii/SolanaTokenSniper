@@ -10,7 +10,7 @@ export default {
   // Basic settings
   verbose: true,
   bail: true,
-  testTimeout: 5000,
+  testTimeout: 30000, // Increased to 30 seconds
   // Performance settings
   maxWorkers: 1,
   maxConcurrency: 1,

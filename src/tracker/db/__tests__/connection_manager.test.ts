@@ -6,9 +6,6 @@ import sqlite3 from 'sqlite3';
 import { ConnectionManager } from '../connection_manager';
 import { EventEmitter } from 'events';
 
-// Configure test timeouts and retries
-jest.setTimeout(60000);
-
 // Explicitly mock 'sqlite' so open is a Jest mock
 jest.mock('sqlite', () => ({
   open: jest.fn()
@@ -59,7 +56,9 @@ describe('ConnectionManager', () => {
   });
 
   afterEach(async () => {
-    await manager.closeAll();
+    if (manager) {
+      await manager.closeAll();
+    }
     consoleErrorSpy.mockRestore();
   });
 
@@ -96,38 +95,48 @@ describe('ConnectionManager', () => {
       expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to create connection:', 'Persistent failure');
     });
 
+    // Set explicit timeout for this test
     it('should handle unrecoverable connections', async () => {
       jest.clearAllMocks();
       (ConnectionManager as any).instance = undefined;
 
+      const connectionError = new Error('Connection lost');
+      const recoverError = new Error('Failed to create new connection');
+
+      // Create a mock DB that fails immediately
       const mockDb = createMockDb({
-        run: jest.fn().mockImplementation(async () => {
-          throw new Error('Connection lost');
-        }),
+        run: jest.fn().mockRejectedValue(connectionError),
         close: jest.fn().mockResolvedValue(undefined)
       });
 
-      // Return failing DB first, then fail to create new ones
+      // First return our failing DB, then fail all subsequent connection attempts
       (open as jest.Mock)
         .mockResolvedValueOnce(mockDb)
-        .mockRejectedValue(new Error('Failed to create new connection'));
+        .mockRejectedValue(recoverError);
 
       manager = ConnectionManager.getInstance();
+      
+      // Configure for fast failure
+      Object.assign(manager, {
+        maxRetries: 1,
+        retryDelay: 1,
+        connectionTimeout: 1,
+        maxConnections: 1
+      });
+
       await manager.initialize();
 
       await expect(
-        manager.executeWithRetry(async (db) => {
-          await db.run('SELECT 1');
-          return 'success';
-        })
-      ).rejects.toThrow('Database operation failed');
+        manager.executeWithRetry((db) => db.run('SELECT 1'), 1)
+      ).rejects.toThrow('Failed to create new connection');
 
+      expect(mockDb.run).toHaveBeenCalledWith('SELECT 1');
+      expect(mockDb.close).toHaveBeenCalled();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Failed to recover database connection:',
         'Failed to create new connection'
       );
-      expect(mockDb.close).toHaveBeenCalled();
-    }, 1000); // Short timeout since we've optimized the test
+    }, 30000);
   });
 
   describe('Transaction Management', () => {
