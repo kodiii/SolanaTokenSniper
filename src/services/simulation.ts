@@ -9,17 +9,19 @@ import {
 } from '../tracker/paper_trading';
 
 interface DexscreenerPriceResponse {
-  pair: {
+  pairs: Array<{
     priceUsd: string;
     liquidity?: {
       usd: number;
     };
-  };
+  }> | null;
 }
 
 export class SimulationService {
   private static instance: SimulationService;
   private priceCheckInterval: NodeJS.Timeout | null = null;
+  private maxPriceRetries = 5;
+  private initialRetryDelay = 5000; // 5 seconds
 
   private constructor() {
     // Initialize the paper trading database
@@ -56,19 +58,56 @@ export class SimulationService {
     }, 60000); // Every minute
   }
 
-  public async getTokenPrice(tokenMint: string): Promise<number | null> {
+  private async delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  public async getTokenPrice(tokenMint: string, retryCount = 0): Promise<number | null> {
     try {
+      console.log(`🔍 Fetching price for token: ${tokenMint}${retryCount > 0 ? ` (Attempt ${retryCount + 1}/${this.maxPriceRetries})` : ''}`);
       const response = await axios.get<DexscreenerPriceResponse>(
         `https://api.dexscreener.com/latest/dex/tokens/${tokenMint}`,
         { timeout: config.tx.get_timeout }
       );
 
-      if (response.data.pair && response.data.pair.priceUsd) {
-        return parseFloat(response.data.pair.priceUsd);
+      console.log(`📊 DexScreener response:`, JSON.stringify(response.data, null, 2));
+
+      if (response.data.pairs && response.data.pairs.length > 0 && response.data.pairs[0].priceUsd) {
+        const price = parseFloat(response.data.pairs[0].priceUsd);
+        console.log(`💰 Found price: $${price}`);
+        return price;
       }
+
+      // If we haven't exceeded max retries and response indicates no pairs yet
+      if (retryCount < this.maxPriceRetries) {
+        const delayMs = this.initialRetryDelay * Math.pow(2, retryCount); // Exponential backoff
+        console.log(`⏳ No price data yet, retrying in ${delayMs/1000} seconds...`);
+        await this.delay(delayMs);
+        return this.getTokenPrice(tokenMint, retryCount + 1);
+      }
+
+      console.log('❌ No valid price data found after all retries');
       return null;
     } catch (error) {
-      console.error('Error fetching token price:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('🚨 DexScreener API Error:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          message: error.message
+        });
+
+        // If we haven't exceeded max retries and it's a potentially temporary error
+        if (retryCount < this.maxPriceRetries && 
+            (error.response?.status === 429 || error.response?.status === 503)) {
+          const delayMs = this.initialRetryDelay * Math.pow(2, retryCount);
+          console.log(`⏳ API error, retrying in ${delayMs/1000} seconds...`);
+          await this.delay(delayMs);
+          return this.getTokenPrice(tokenMint, retryCount + 1);
+        }
+      } else {
+        console.error('❌ Error fetching token price:', error);
+      }
       return null;
     }
   }
