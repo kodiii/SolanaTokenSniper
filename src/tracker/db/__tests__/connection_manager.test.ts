@@ -137,6 +137,31 @@ describe('ConnectionManager', () => {
         'Failed to create new connection'
       );
     }, 30000);
+
+    it('should handle connection close failures', async () => {
+      jest.clearAllMocks();
+      (ConnectionManager as any).instance = undefined;
+
+      const closeError = new Error('Failed to close connection');
+      const mockDb = createMockDb({
+        close: jest.fn().mockRejectedValue(closeError)
+      });
+
+      // Return our DB with failing close
+      (open as jest.Mock).mockResolvedValue(mockDb);
+
+      manager = ConnectionManager.getInstance();
+      await manager.initialize();
+
+      // This will trigger closeAll in the afterEach
+      await manager.closeAll();
+
+      expect(mockDb.close).toHaveBeenCalled();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Error closing connection:',
+        'Failed to close connection'
+      );
+    });
   });
 
   describe('Transaction Management', () => {
