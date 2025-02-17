@@ -34,3 +34,8 @@ next-env.d.ts
 # Project Personal Files
 holdings.db
 myConfig.ts
+
+# Documentation and Development Notes
+/cline_docs/
+*.md
+!README.md
