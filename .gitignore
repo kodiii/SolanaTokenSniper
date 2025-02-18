@@ -33,6 +33,7 @@ next-env.d.ts
 
 # Project Personal Files
 holdings.db
+paper_trading.db
 myConfig.ts
 
 # Documentation and Development Notes

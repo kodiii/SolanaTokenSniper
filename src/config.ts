@@ -4,12 +4,12 @@
 **/
 export const config = {
   paper_trading: {
-    initial_balance: 3, // Initial paper trading balance in SOL
+    initial_balance: 2, // Initial paper trading balance in SOL
     dashboard_refresh: 1500, // Update dashboard every 5 seconds
     price_check: {
-      max_retries: 15, // Maximum number of retries for price fetching
+      max_retries: 10, // Maximum number of retries for price fetching
       initial_delay: 1000, // Start with 1 second delay
-      max_delay: 15000, // Maximum delay between retries (5 seconds)
+      max_delay: 7500, // Maximum delay between retries (5 seconds)
     }
   },
   // Paper trading price validation
@@ -48,8 +48,8 @@ export const config = {
     prio_level: "medium", // If you want to land transaction fast, set this to use `veryHigh`. You will pay on average higher priority fee.
     slippageBps: "200", // 2%
     auto_sell: true, // If set to true, stop loss and take profit triggers automatically when set.
-    stop_loss_percent: 10,
-    take_profit_percent: 25,
+    stop_loss_percent: 15,
+    take_profit_percent: 20,
     track_public_wallet: "", // If set an additional log line will be shown with a link to track your wallet
   },
   rug_check: {
@@ -63,22 +63,22 @@ export const config = {
     // Critical
     allow_mutable: true,
     block_returning_token_names: true,
-    block_returning_token_creators: true,
+    block_returning_token_creators: false,
     block_symbols: ["XXX"],
     block_names: ["XXX"],
     only_contain_string: false, // Enable/disable string containment filter
     contain_string: ["AI", "GPT", "AGENT"], // Strings to match in token names (case insensitive)
     allow_insider_topholders: false, // Allow inseder accounts to be part of the topholders
-    max_alowed_pct_topholders: 50, // Max allowed percentage an individual topholder might hold
-    max_alowed_pct_all_topholders: 50, // Max allowed totalpercentage all topholders in total might hold related to supply
+    max_alowed_pct_topholders: 20, // Max allowed percentage an individual topholder might hold
+    max_alowed_pct_all_topholders: 20, // Max allowed totalpercentage all topholders in total might hold related to supply
     exclude_lp_from_topholders: true, // If true, Liquidity Pools will not be seen as top holders
     // Warning
     min_total_markets: 0,
     min_total_lp_providers: 0,
-    min_total_market_Liquidity: 5000,
+    min_total_market_Liquidity: 10000,
     // Misc
     ignore_pump_fun: false,
-    max_score: 20000, // Set to 0 to ignore
+    max_score: 11000, // Set to 0 to ignore
     legacy_not_allowed: [
       //"Low Liquidity",
       "Freeze Authority still enabled",
