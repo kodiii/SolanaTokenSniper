@@ -5,7 +5,7 @@
 export const config = {
   paper_trading: {
     initial_balance: 2, // Initial paper trading balance in SOL
-    dashboard_refresh: 1500, // Update dashboard every 5 seconds
+    dashboard_refresh: 1000, // Update dashboard every 5 seconds
     price_check: {
       max_retries: 15, // Maximum number of retries for price fetching
       initial_delay: 1000, // Start with 1 second delay
@@ -36,7 +36,7 @@ export const config = {
     verbose_log: false,
     prio_fee_max_lamports: 10000000, // 0.01 SOL
     prio_level: "medium", // If you want to land transaction fast, set this to use `veryHigh`. You will pay on average higher priority fee.
-    amount: "100000000", //0.01 SOL
+    amount: "1500000000", //1.5 SOL
     slippageBps: "200", // 2%
     db_name_tracker_holdings: "src/tracker/holdings.db", // Sqlite Database location
     token_not_tradable_400_error_retries: 5, // How many times should the bot try to get a quote if the token is not tradable yet
@@ -55,6 +55,8 @@ export const config = {
   rug_check: {
     verbose_log: false,
     simulation_mode: true,
+    tracker_preference: "photon", // Options: "photon" or "dexscreener" - Determines which tracker URL to open
+    open_in_browser: false, // Whether to automatically open the tracker URL in the default browser
     // Dangerous
     allow_mint_authority: false, // The mint authority is the address that has permission to mint (create) new tokens. Strongly Advised to set to false.
     allow_not_initialized: false, // This indicates whether the token account is properly set up on the blockchain. Strongly Advised to set to false

@@ -80,8 +80,8 @@ export async function initializePaperTradingDB(): Promise<boolean> {
     // Get current balance
     const balance = await db.get('SELECT * FROM virtual_balance ORDER BY id DESC LIMIT 1');
     
-    // Initialize or update balance if it doesn't match config
-    if (!balance || balance.balance_sol !== config.paper_trading.initial_balance) {
+    // Initialize balance only if it doesn't exist
+    if (!balance) {
       await db.run(
         'INSERT INTO virtual_balance (balance_sol, updated_at) VALUES (?, ?)',
         [config.paper_trading.initial_balance, Date.now()]
