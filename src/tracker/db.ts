@@ -150,6 +150,32 @@ export async function selectTokenByNameAndCreator(name: string, creator: string)
   return tokens;
 }
 
+export async function selectAllHoldings(): Promise<HoldingRecord[]> {
+  // Open the database
+  const db = await open({
+    filename: config.swap.db_name_tracker_holdings,
+    driver: sqlite3.Database,
+  });
+
+  // Create Table if not exists
+  const holdingsTableExist = await createTableHoldings(db);
+  if (!holdingsTableExist) {
+    await db.close();
+    return [];
+  }
+
+  // Query the database for all holdings
+  const holdings = await db.all(
+    `SELECT * FROM holdings;`
+  );
+
+  // Close the database
+  await db.close();
+
+  // Return the results
+  return holdings;
+}
+
 export async function selectTokenByMint(mint: string): Promise<NewTokenRecord[]> {
   // Open the database
   const db = await open({

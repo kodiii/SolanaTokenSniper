@@ -140,8 +140,8 @@ export class SimulationService {
   ): Promise<boolean> {
     // Check position limit
     const currentPositions = await getTrackedTokens();
-    if (currentPositions.length >= config.paper_trading.max_positions) {
-      console.log(`❌ Cannot open new position: Maximum number of positions (${config.paper_trading.max_positions}) reached`);
+    if (currentPositions.length >= config.swap.max_positions) {
+      console.log(`❌ Cannot open new position: Maximum number of positions (${config.swap.max_positions}) reached`);
       return false;
     }
 

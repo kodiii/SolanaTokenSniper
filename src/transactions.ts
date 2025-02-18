@@ -15,7 +15,7 @@ import {
   NewTokenRecord,
   createSellTransactionResponse,
 } from "./types";
-import { insertHolding, insertNewToken, removeHolding, selectTokenByMint, selectTokenByNameAndCreator } from "./tracker/db";
+import { insertHolding, insertNewToken, removeHolding, selectTokenByMint, selectTokenByNameAndCreator, selectAllHoldings } from "./tracker/db";
 
 // Load environment variables from the .env file
 dotenv.config();
@@ -142,6 +142,13 @@ export async function createSwapTransaction(solMint: string, tokenMint: string):
   let serializedQuoteResponseData: SerializedQuoteResponse | null = null;
   const connection = new Connection(rpcUrl);
   const myWallet = new Wallet(Keypair.fromSecretKey(bs58.decode(process.env.PRIV_KEY_WALLET || "")));
+
+  // Check position limit
+  const currentHoldings = await selectAllHoldings();
+  if (currentHoldings.length >= config.swap.max_positions) {
+    console.log(`❌ Cannot open new position: Maximum number of positions (${config.swap.max_positions}) reached`);
+    return null;
+  }
 
   // Get Swap Quote
   let retryCount = 0;

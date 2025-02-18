@@ -36,8 +36,9 @@ export const config = {
   swap: {
     verbose_log: false,
     prio_fee_max_lamports: 10000000, // 0.01 SOL
+    max_positions: 3, // Maximum number of concurrent positions (applies to both real and paper trading)
     prio_level: "medium", // If you want to land transaction fast, set this to use `veryHigh`. You will pay on average higher priority fee.
-    amount: "1500000000", //1.5 SOL
+    amount: "150000000", //1.5 SOL
     slippageBps: "200", // 2%
     db_name_tracker_holdings: "src/tracker/holdings.db", // Sqlite Database location
     token_not_tradable_400_error_retries: 5, // How many times should the bot try to get a quote if the token is not tradable yet
@@ -64,7 +65,7 @@ export const config = {
     allow_freeze_authority: false, // The freeze authority is the address that can freeze token transfers, effectively locking up funds. Strongly Advised to set to false
     allow_rugged: false,
     // Critical
-    allow_mutable: true,
+    allow_mutable: false,
     block_returning_token_names: true,
     block_returning_token_creators: false,
     block_symbols: ["XXX"],
@@ -72,8 +73,8 @@ export const config = {
     only_contain_string: false, // Enable/disable string containment filter
     contain_string: ["AI", "GPT", "AGENT"], // Strings to match in token names (case insensitive)
     allow_insider_topholders: false, // Allow inseder accounts to be part of the topholders
-    max_alowed_pct_topholders: 25, // Max allowed percentage an individual topholder might hold
-    max_alowed_pct_all_topholders: 25, // Max allowed totalpercentage all topholders in total might hold related to supply
+    max_alowed_pct_topholders: 50, // Max allowed percentage an individual topholder might hold
+    max_alowed_pct_all_topholders: 50, // Max allowed totalpercentage all topholders in total might hold related to supply
     exclude_lp_from_topholders: true, // If true, Liquidity Pools will not be seen as top holders
     // Warning
     min_total_markets: 0,
