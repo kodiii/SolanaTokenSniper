@@ -7,7 +7,7 @@ export const config = {
     initial_balance: 2, // Initial paper trading balance in SOL
     dashboard_refresh: 1500, // Update dashboard every 5 seconds
     price_check: {
-      max_retries: 10, // Maximum number of retries for price fetching
+      max_retries: 15, // Maximum number of retries for price fetching
       initial_delay: 1000, // Start with 1 second delay
       max_delay: 7500, // Maximum delay between retries (5 seconds)
     }
@@ -69,8 +69,8 @@ export const config = {
     only_contain_string: false, // Enable/disable string containment filter
     contain_string: ["AI", "GPT", "AGENT"], // Strings to match in token names (case insensitive)
     allow_insider_topholders: false, // Allow inseder accounts to be part of the topholders
-    max_alowed_pct_topholders: 20, // Max allowed percentage an individual topholder might hold
-    max_alowed_pct_all_topholders: 20, // Max allowed totalpercentage all topholders in total might hold related to supply
+    max_alowed_pct_topholders: 25, // Max allowed percentage an individual topholder might hold
+    max_alowed_pct_all_topholders: 25, // Max allowed totalpercentage all topholders in total might hold related to supply
     exclude_lp_from_topholders: true, // If true, Liquidity Pools will not be seen as top holders
     // Warning
     min_total_markets: 0,
@@ -78,7 +78,7 @@ export const config = {
     min_total_market_Liquidity: 10000,
     // Misc
     ignore_pump_fun: false,
-    max_score: 11000, // Set to 0 to ignore
+    max_score: 11500, // Set to 0 to ignore
     legacy_not_allowed: [
       //"Low Liquidity",
       "Freeze Authority still enabled",
