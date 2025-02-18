@@ -26,10 +26,13 @@
     "@project-serum/anchor": "^0.26.0",
     "@solana/web3.js": "^1.87.6",
     "@types/axios": "^0.14.4",
+    "@types/luxon": "^3.4.2",
     "@types/sqlite3": "^3.1.11",
+    "axios": "^1.7.9",
     "bs58": "^6.0.0",
     "chalk": "^4.1.2",
     "dotenv": "^16.3.1",
+    "luxon": "^3.5.0",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.6",
     "ws": "^8.18.0"

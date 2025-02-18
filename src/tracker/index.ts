@@ -32,28 +32,31 @@ interface JupiterPriceData {
   }>;
 }
 
+let isRunning = true;
+
 async function main() {
   const priceUrl = process.env.JUP_HTTPS_PRICE_URI || "";
   const dexPriceUrl = process.env.DEX_HTTPS_LATEST_TOKENS || "";
   const priceSource = config.sell.price_source || "jup";
   const solMint = config.liquidity_pool.wsol_pc_mint;
 
-  // Connect to database and create if not exists
-  const db = await open({
-    filename: config.swap.db_name_tracker_holdings,
-    driver: sqlite3.Database,
-  });
+  try {
+    // Connect to database and create if not exists
+    const db = await open({
+      filename: config.swap.db_name_tracker_holdings,
+      driver: sqlite3.Database,
+    });
 
-  // Create Table if not exists
-  const holdingsTableExist = await createTableHoldings(db);
-  if (!holdingsTableExist) {
-    console.log("Holdings table not present.");
-    // Close the database connection when done
-    await db.close();
-  }
+    // Create Table if not exists
+    const holdingsTableExist = await createTableHoldings(db);
+    if (!holdingsTableExist) {
+      console.log("Holdings table not present.");
+      // Close the database connection when done
+      await db.close();
+      return;
+    }
 
-  // Proceed with tracker
-  if (holdingsTableExist) {
+    // Proceed with tracker
     // Create const for holdings and action logs.
     const holdingLogs: string[] = [];
     let currentPriceSource = "Jupiter Agregator";
@@ -263,11 +266,28 @@ async function main() {
     }
 
     await db.close();
+  } catch (error) {
+    console.error('Error in main loop:', error);
   }
 
-  setTimeout(main, 5000); // Call main again after 5 seconds
+  // Schedule next run if still running
+  if (isRunning) {
+    setTimeout(main, 5000);
+  }
 }
 
+// Handle process termination gracefully
+process.on('SIGINT', () => {
+  console.log('Stopping tracker...');
+  isRunning = false;
+});
+
+process.on('SIGTERM', () => {
+  console.log('Stopping tracker...');
+  isRunning = false;
+});
+
 main().catch((err) => {
-  console.error(err);
+  console.error('Critical error:', err);
+  isRunning = false;
 });
