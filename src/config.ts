@@ -6,6 +6,7 @@ export const config = {
   paper_trading: {
     initial_balance: 2, // Initial paper trading balance in SOL
     dashboard_refresh: 1000, // Update dashboard every 5 seconds
+    max_positions: 5, // Maximum number of concurrent positions
     price_check: {
       max_retries: 15, // Maximum number of retries for price fetching
       initial_delay: 1000, // Start with 1 second delay

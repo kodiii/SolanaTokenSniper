@@ -138,12 +138,19 @@ export class SimulationService {
     tokenName: string,
     currentPrice: number
   ): Promise<boolean> {
+    // Check position limit
+    const currentPositions = await getTrackedTokens();
+    if (currentPositions.length >= config.paper_trading.max_positions) {
+      console.log(`❌ Cannot open new position: Maximum number of positions (${config.paper_trading.max_positions}) reached`);
+      return false;
+    }
+
     const balance = await getVirtualBalance();
     if (!balance) {
       console.log('❌ Could not get virtual balance');
       return false;
     }
-
+    
     // Use fixed amount from config
     const amountLamports = BigInt(config.swap.amount);
     const feesLamports = BigInt(config.swap.prio_fee_max_lamports);
