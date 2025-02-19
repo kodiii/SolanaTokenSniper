@@ -5,10 +5,11 @@ import { initializePaperTradingDB } from "../tracker/paper_trading";
 import { config } from "../config";
 
 const DB_PATH = "src/tracker/paper_trading.db";
-const TABLE_WIDTH = 150;
-const TOKEN_COL_WIDTH = 35;
-const NUM_COL_WIDTH = 15;
+const TABLE_WIDTH = 200;
+const TOKEN_COL_WIDTH = 45;
+const NUM_COL_WIDTH = 18;
 const TIME_COL_WIDTH = 25;
+const PRICE_COL_WIDTH = 20;
 
 interface TokenPosition {
     token_mint: string;
@@ -62,32 +63,39 @@ const BOX = {
 };
 
 function drawBox(title: string, content: string[]): void {
-    // Top border with title
-    console.log('\n' + BOX.topLeft + BOX.horizontal.repeat(2) + 
-                chalk.bold.blue(` ${title} `) + 
-                BOX.horizontal.repeat(TABLE_WIDTH - title.length - 4) + BOX.topRight);
+    const titleBar = chalk.bold.blue(` ${title} `);
+    const fullWidth = TABLE_WIDTH;
     
-    // Content with side borders
+    // Top border with title
+    console.log('\n' + BOX.topLeft + BOX.horizontal.repeat(2) +
+                titleBar +
+                BOX.horizontal.repeat(fullWidth - titleBar.length - 4) + BOX.topRight);
+    
+    // Content lines
     content.forEach(line => {
-        console.log(BOX.vertical + ' ' + line + ' '.repeat(Math.max(0, TABLE_WIDTH - line.length - 2)) + BOX.vertical);
+        const paddedLine = line.padEnd(fullWidth - 3); // -3 for the border chars and space
+        console.log(BOX.vertical + ' ' + paddedLine + ' ' + BOX.vertical);
     });
     
     // Bottom border
-    console.log(BOX.bottomLeft + BOX.horizontal.repeat(TABLE_WIDTH) + BOX.bottomRight);
+    console.log(BOX.bottomLeft + BOX.horizontal.repeat(fullWidth) + BOX.bottomRight);
 }
 
 function drawTable(headers: string[], rows: string[][], title: string): void {
-    const headerLine = headers.join(BOX.vertical);
-    const separator = BOX.horizontal.repeat(TABLE_WIDTH);
+    const titleBar = chalk.bold.blue(` ${title} `);
+    const fullWidth = TABLE_WIDTH;
     
-    console.log('\n' + BOX.topLeft + BOX.horizontal.repeat(2) + 
-                chalk.bold.blue(` ${title} `) + 
-                BOX.horizontal.repeat(TABLE_WIDTH - title.length - 4) + BOX.topRight);
+    // Top border with title
+    console.log('\n' + BOX.topLeft + BOX.horizontal.repeat(2) +
+                titleBar +
+                BOX.horizontal.repeat(fullWidth - titleBar.length - 4) + BOX.topRight);
     
     // Headers
+    const headerLine = headers.join(BOX.vertical);
     console.log(BOX.vertical + ' ' + chalk.yellow(headerLine) + ' ' + BOX.vertical);
     
     // Separator after headers
+    const separator = BOX.horizontal.repeat(fullWidth);
     console.log(BOX.leftT + separator + BOX.rightT);
     
     // Data rows
@@ -127,45 +135,22 @@ async function displayActivePositions(): Promise<void> {
 
         if (positions.length > 0) {
             const headers = [
-                'Token Name'.padEnd(TOKEN_COL_WIDTH),
-                'Token Address'.padEnd(TOKEN_COL_WIDTH),
-                'Volume m5'.padEnd(NUM_COL_WIDTH),
-                'MarketCap'.padEnd(NUM_COL_WIDTH),
-                'Liquidity USD'.padEnd(NUM_COL_WIDTH),
-                'Buy Price'.padEnd(NUM_COL_WIDTH * 2),
-                'Buy Fees'.padEnd(NUM_COL_WIDTH),
-                'Amount'.padEnd(NUM_COL_WIDTH * 2),
-                'Time Buy'.padEnd(TIME_COL_WIDTH),
-                'Sell Price'.padEnd(NUM_COL_WIDTH * 2),
-                'Sell Fees'.padEnd(NUM_COL_WIDTH),
-                'Time Sold'.padEnd(TIME_COL_WIDTH),
+                'Token'.padEnd(TOKEN_COL_WIDTH),
+                'Position Size'.padEnd(NUM_COL_WIDTH),
+                'Entry Price'.padEnd(PRICE_COL_WIDTH),
+                'Current Price'.padEnd(PRICE_COL_WIDTH),
                 'PNL'.padEnd(NUM_COL_WIDTH)
             ];
 
             const rows = positions.map(pos => {
                 const pnlPercent = ((pos.current_price - pos.buy_price) / pos.buy_price) * 100;
                 const pnlColor = pnlPercent >= 0 ? chalk.green : chalk.red;
-
-                // Get sell information from simulated trades if available
-                const sellInfo = pos.sell_time ? {
-                    price: pos.current_price.toFixed(8),
-                    time: new Date(pos.sell_time).toLocaleString()
-                } : { price: '', time: '' };
-
                 return [
                     pos.token_name.padEnd(TOKEN_COL_WIDTH),
-                    pos.token_mint.padEnd(TOKEN_COL_WIDTH),
-                    pos.volume_m5.toFixed(2).padEnd(NUM_COL_WIDTH),
-                    pos.market_cap.toFixed(2).padEnd(NUM_COL_WIDTH),
-                    pos.liquidity_usd.toFixed(2).padEnd(NUM_COL_WIDTH),
-                    pos.buy_price.toFixed(8).padEnd(NUM_COL_WIDTH * 2),
-                    '0.005'.padEnd(NUM_COL_WIDTH), // Fixed fee for now
-                    pos.amount.toFixed(8).padEnd(NUM_COL_WIDTH * 2),
-                    new Date(pos.buy_time).toLocaleString().padEnd(TIME_COL_WIDTH),
-                    sellInfo.price.padEnd(NUM_COL_WIDTH * 2),
-                    (sellInfo.price ? '0.005' : '').padEnd(NUM_COL_WIDTH),
-                    sellInfo.time.padEnd(TIME_COL_WIDTH),
-                    pnlColor(pnlPercent.toFixed(2) + '%'.padEnd(NUM_COL_WIDTH - 3)),
+                    pos.amount.toFixed(8).padEnd(NUM_COL_WIDTH),
+                    pos.buy_price.toFixed(8).padEnd(PRICE_COL_WIDTH),
+                    pos.current_price.toFixed(8).padEnd(PRICE_COL_WIDTH),
+                    pnlColor(pnlPercent.toFixed(2) + '%').padEnd(NUM_COL_WIDTH)
                 ];
             });
 
@@ -175,6 +160,97 @@ async function displayActivePositions(): Promise<void> {
         }
     } catch (error) {
         console.error('Error fetching active positions:', error);
+    }
+}
+
+async function displayRecentTrades(limit: number = 20): Promise<void> {
+    const connectionManager = ConnectionManager.getInstance(DB_PATH);
+    try {
+        const db = await connectionManager.getConnection();
+        const trades = await db.all(
+            'SELECT * FROM simulated_trades ORDER BY timestamp DESC LIMIT ?',
+            [limit * 2] // Fetch more to ensure we get both buy and sell
+        );
+        connectionManager.releaseConnection(db);
+
+        if (trades.length > 0) {
+            const headers = [
+                'Token Name'.padEnd(TOKEN_COL_WIDTH),
+                'Volume m5'.padEnd(NUM_COL_WIDTH),
+                'MarketCap'.padEnd(NUM_COL_WIDTH),
+                'Liquidity USD'.padEnd(NUM_COL_WIDTH),
+                'Buy Price'.padEnd(PRICE_COL_WIDTH),
+                'Buy Fees'.padEnd(NUM_COL_WIDTH),
+                'Amount'.padEnd(NUM_COL_WIDTH),
+                'Time Buy'.padEnd(TIME_COL_WIDTH),
+                'Sell Price'.padEnd(PRICE_COL_WIDTH),
+                'Sell Fees'.padEnd(NUM_COL_WIDTH),
+                'Time Sold'.padEnd(TIME_COL_WIDTH),
+                'PNL'.padEnd(NUM_COL_WIDTH)
+            ];
+
+            // Create a map to store unique trades by token
+            const tradeMap = new Map();
+            
+            // Process trades in chronological order to ensure buys come before sells
+            trades.sort((a, b) => a.timestamp - b.timestamp).forEach(trade => {
+                if (trade.type === 'buy' && !tradeMap.has(trade.token_mint)) {
+                    tradeMap.set(trade.token_mint, {
+                        token_name: trade.token_name || trade.token_mint,
+                        volume_m5: Number(trade.volume_m5) || 0,
+                        market_cap: Number(trade.market_cap) || 0,
+                        liquidity_usd: Number(trade.liquidity_usd) || 0,
+                        buy_price: Number(trade.price_per_token),
+                        buy_fees: Number(trade.fees),
+                        amount: Number(trade.amount_token),
+                        buy_time: trade.timestamp,
+                        sell_price: null,
+                        sell_fees: null,
+                        sell_time: null
+                    });
+                } else if (trade.type === 'sell') {
+                    const existingTrade = tradeMap.get(trade.token_mint);
+                    if (existingTrade && !existingTrade.sell_time) {
+                        existingTrade.sell_price = Number(trade.price_per_token);
+                        existingTrade.sell_fees = Number(trade.fees);
+                        existingTrade.sell_time = trade.timestamp;
+                    }
+                }
+            });
+
+            const rows = Array.from(tradeMap.entries())
+                .sort(([, a], [, b]) => (b.buy_time || 0) - (a.buy_time || 0))
+                .slice(0, limit)
+                .map(([, trade]) => {
+                    const pnl = trade.sell_price
+                        ? ((trade.sell_price - trade.buy_price) / trade.buy_price * 100)
+                        : 0;
+                    const pnlFormatted = trade.sell_price
+                        ? (pnl >= 0 ? chalk.green : chalk.red)(`${pnl.toFixed(2)}%`)
+                        : '0%';
+
+                    return [
+                        trade.token_name.padEnd(TOKEN_COL_WIDTH),
+                        (trade.volume_m5 ? trade.volume_m5.toFixed(2) : '0').padEnd(NUM_COL_WIDTH),
+                        (trade.market_cap ? trade.market_cap.toFixed(2) : '0').padEnd(NUM_COL_WIDTH),
+                        (trade.liquidity_usd ? trade.liquidity_usd.toFixed(2) : '0').padEnd(NUM_COL_WIDTH),
+                        trade.buy_price.toFixed(8).padEnd(PRICE_COL_WIDTH),
+                        trade.buy_fees.toFixed(8).padEnd(NUM_COL_WIDTH),
+                        trade.amount.toFixed(8).padEnd(NUM_COL_WIDTH),
+                        new Date(trade.buy_time).toLocaleString().padEnd(TIME_COL_WIDTH),
+                        (trade.sell_price ? trade.sell_price.toFixed(8) : '0').padEnd(PRICE_COL_WIDTH),
+                        (trade.sell_fees ? trade.sell_fees.toFixed(8) : '0').padEnd(NUM_COL_WIDTH),
+                        (trade.sell_time ? new Date(trade.sell_time).toLocaleString() : '').padEnd(TIME_COL_WIDTH),
+                        pnlFormatted.padEnd(NUM_COL_WIDTH)
+                    ];
+                });
+
+            drawTable(headers, rows, '📈 Recent Trades');
+        } else {
+            drawBox('📈 Recent Trades', [chalk.yellow('No trades recorded yet')]);
+        }
+    } catch (error) {
+        console.error('Error fetching recent trades:', error);
     }
 }
 
@@ -196,61 +272,6 @@ async function displayTradingStats(stats: TradingStats): Promise<void> {
     }
 
     drawBox('📈 Trading Statistics', content);
-}
-
-async function displayRecentTrades(limit: number = 20): Promise<void> {
-    const connectionManager = ConnectionManager.getInstance(DB_PATH);
-    try {
-        const db = await connectionManager.getConnection();
-        const trades = await db.all(
-            'SELECT * FROM simulated_trades ORDER BY timestamp DESC LIMIT ?',
-            [limit]
-        );
-        connectionManager.releaseConnection(db);
-
-        if (trades.length > 0) {
-            const headers = [
-                'Time'.padEnd(TIME_COL_WIDTH),
-                'Type'.padEnd(10),
-                'Token'.padEnd(TOKEN_COL_WIDTH),
-                'Amount SOL'.padEnd(NUM_COL_WIDTH),
-                'Price/Token'.padEnd(NUM_COL_WIDTH),
-                'Fees'.padEnd(NUM_COL_WIDTH)
-            ];
-
-            const rows = trades.map(trade => [
-                new Date(trade.timestamp).toLocaleString().padEnd(TIME_COL_WIDTH),
-                (trade.type === 'buy' ? chalk.green : chalk.red)(trade.type.toUpperCase().padEnd(10)),
-                trade.token_mint.padEnd(TOKEN_COL_WIDTH),
-                trade.amount_sol.toFixed(4).padEnd(NUM_COL_WIDTH),
-                trade.price_per_token.toFixed(4).padEnd(NUM_COL_WIDTH),
-                trade.fees.toFixed(4).padEnd(NUM_COL_WIDTH)
-            ]);
-
-            drawTable(headers, rows, '📈 Recent Trades');
-        } else {
-            drawBox('📈 Recent Trades', [chalk.yellow('No trades recorded yet')]);
-        }
-    } catch (error) {
-        console.error('Error fetching recent trades:', error);
-    }
-}
-
-async function displayDashboard(): Promise<void> {
-    console.clear();
-    console.log(chalk.bold.cyan('\n=== Paper Trading Dashboard ==='));
-    
-    await displayVirtualBalance();
-    await displayActivePositions();
-    
-    const stats = await calculateTradingStats();
-    if (stats) {
-        await displayTradingStats(stats);
-    }
-    
-    await displayRecentTrades();
-
-    console.log('\n' + chalk.gray(`Auto-refreshing every ${config.paper_trading.dashboard_refresh/1000} seconds. Press Ctrl+C to exit`));
 }
 
 async function calculateTradingStats(): Promise<TradingStats | null> {
@@ -317,6 +338,23 @@ async function calculateTradingStats(): Promise<TradingStats | null> {
         console.error('Error calculating trading stats:', error);
         return null;
     }
+}
+
+async function displayDashboard(): Promise<void> {
+    console.clear();
+    console.log(chalk.bold.cyan('\n=== Paper Trading Dashboard ==='));
+    
+    await displayVirtualBalance();
+    await displayActivePositions();
+    
+    const stats = await calculateTradingStats();
+    if (stats) {
+        await displayTradingStats(stats);
+    }
+    
+    await displayRecentTrades();
+
+    console.log('\n' + chalk.gray(`Auto-refreshing every ${config.paper_trading.dashboard_refresh/1000} seconds. Press Ctrl+C to exit`));
 }
 
 async function startDashboard(): Promise<void> {
