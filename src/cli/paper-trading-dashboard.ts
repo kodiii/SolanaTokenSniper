@@ -6,7 +6,7 @@ import { config } from "../config";
 
 const DB_PATH = "src/tracker/paper_trading.db";
 const TABLE_WIDTH = 150;
-const TOKEN_COL_WIDTH = 45;
+const TOKEN_COL_WIDTH = 35;
 const NUM_COL_WIDTH = 15;
 const TIME_COL_WIDTH = 25;
 
@@ -15,9 +15,14 @@ interface TokenPosition {
     token_name: string;
     amount: number;
     buy_price: number;
+    volume_m5: number;
+    market_cap: number;
+    liquidity_usd: number;
     current_price: number;
     last_updated: number;
+    buy_time: number;
     stop_loss: number;
+    sell_time: number | null;
     take_profit: number;
 }
 
@@ -122,26 +127,45 @@ async function displayActivePositions(): Promise<void> {
 
         if (positions.length > 0) {
             const headers = [
-                'Token'.padEnd(TOKEN_COL_WIDTH),
-                'Amount'.padEnd(NUM_COL_WIDTH),
-                'Buy Price'.padEnd(NUM_COL_WIDTH),
-                'Current Price'.padEnd(NUM_COL_WIDTH),
-                'PNL'.padEnd(NUM_COL_WIDTH),
-                'Stop Loss'.padEnd(NUM_COL_WIDTH),
-                'Take Profit'.padEnd(NUM_COL_WIDTH)
+                'Token Name'.padEnd(TOKEN_COL_WIDTH),
+                'Token Address'.padEnd(TOKEN_COL_WIDTH),
+                'Volume m5'.padEnd(NUM_COL_WIDTH),
+                'MarketCap'.padEnd(NUM_COL_WIDTH),
+                'Liquidity USD'.padEnd(NUM_COL_WIDTH),
+                'Buy Price'.padEnd(NUM_COL_WIDTH * 2),
+                'Buy Fees'.padEnd(NUM_COL_WIDTH),
+                'Amount'.padEnd(NUM_COL_WIDTH * 2),
+                'Time Buy'.padEnd(TIME_COL_WIDTH),
+                'Sell Price'.padEnd(NUM_COL_WIDTH * 2),
+                'Sell Fees'.padEnd(NUM_COL_WIDTH),
+                'Time Sold'.padEnd(TIME_COL_WIDTH),
+                'PNL'.padEnd(NUM_COL_WIDTH)
             ];
 
             const rows = positions.map(pos => {
                 const pnlPercent = ((pos.current_price - pos.buy_price) / pos.buy_price) * 100;
                 const pnlColor = pnlPercent >= 0 ? chalk.green : chalk.red;
+
+                // Get sell information from simulated trades if available
+                const sellInfo = pos.sell_time ? {
+                    price: pos.current_price.toFixed(8),
+                    time: new Date(pos.sell_time).toLocaleString()
+                } : { price: '', time: '' };
+
                 return [
+                    pos.token_name.padEnd(TOKEN_COL_WIDTH),
                     pos.token_mint.padEnd(TOKEN_COL_WIDTH),
-                    pos.amount.toFixed(4).padEnd(NUM_COL_WIDTH),
-                    pos.buy_price.toFixed(4).padEnd(NUM_COL_WIDTH),
-                    pos.current_price.toFixed(4).padEnd(NUM_COL_WIDTH),
+                    pos.volume_m5.toFixed(2).padEnd(NUM_COL_WIDTH),
+                    pos.market_cap.toFixed(2).padEnd(NUM_COL_WIDTH),
+                    pos.liquidity_usd.toFixed(2).padEnd(NUM_COL_WIDTH),
+                    pos.buy_price.toFixed(8).padEnd(NUM_COL_WIDTH * 2),
+                    '0.005'.padEnd(NUM_COL_WIDTH), // Fixed fee for now
+                    pos.amount.toFixed(8).padEnd(NUM_COL_WIDTH * 2),
+                    new Date(pos.buy_time).toLocaleString().padEnd(TIME_COL_WIDTH),
+                    sellInfo.price.padEnd(NUM_COL_WIDTH * 2),
+                    (sellInfo.price ? '0.005' : '').padEnd(NUM_COL_WIDTH),
+                    sellInfo.time.padEnd(TIME_COL_WIDTH),
                     pnlColor(pnlPercent.toFixed(2) + '%'.padEnd(NUM_COL_WIDTH - 3)),
-                    pos.stop_loss.toFixed(4).padEnd(NUM_COL_WIDTH),
-                    pos.take_profit.toFixed(4).padEnd(NUM_COL_WIDTH)
                 ];
             });
 
