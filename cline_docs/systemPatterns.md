@@ -149,6 +149,19 @@ The system implements a robust connection pool pattern with the following charac
 
 ## Latest Improvements
 
+1. **Position Management Pattern (18/02/2025)**
+   ```typescript
+   // Unified position limit configuration
+   max_positions: 5 // Applied to both real and paper trading
+   
+   // Position limit enforcement pattern
+   const currentPositions = await selectAllHoldings();
+   if (currentPositions.length >= config.swap.max_positions) {
+     console.log(`❌ Cannot open new position: Maximum number of positions reached`);
+     return false;
+   }
+   ```
+
 1. **Enhanced Memory Management (17/02/2025)**
    - Added connection aging system
    - Implemented idle connection cleanup

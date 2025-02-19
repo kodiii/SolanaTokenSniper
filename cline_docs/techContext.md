@@ -79,6 +79,7 @@ Key configuration parameters in config.ts:
 - Auto-sell settings
 - Transaction timeout values
 - Slippage settings
+- Position limits (max concurrent positions)
 - Priority fee configurations
 
 ## Technical Constraints

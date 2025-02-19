@@ -4,13 +4,13 @@
 **/
 export const config = {
   paper_trading: {
-    initial_balance: 2, // Initial paper trading balance in SOL
+    initial_balance: 5, // Initial paper trading balance in SOL
     dashboard_refresh: 1000, // Update dashboard every 5 seconds
-    max_positions: 5, // Maximum number of concurrent positions
+    max_positions: 3, // Maximum number of concurrent positions
     price_check: {
       max_retries: 15, // Maximum number of retries for price fetching
-      initial_delay: 1000, // Start with 1 second delay
-      max_delay: 7500, // Maximum delay between retries (5 seconds)
+      initial_delay: 3000, // Start with 1 second delay
+      max_delay: 10000, // Maximum delay between retries (10 seconds)
     }
   },
   // Paper trading price validation
@@ -35,10 +35,10 @@ export const config = {
   },
   swap: {
     verbose_log: false,
-    prio_fee_max_lamports: 10000000, // 0.01 SOL
+    prio_fee_max_lamports: 5000000, // 0.01 SOL
     max_positions: 3, // Maximum number of concurrent positions (applies to both real and paper trading)
     prio_level: "medium", // If you want to land transaction fast, set this to use `veryHigh`. You will pay on average higher priority fee.
-    amount: "150000000", //1.5 SOL
+    amount: "1000000000", //1 SOL
     slippageBps: "200", // 2%
     db_name_tracker_holdings: "src/tracker/holdings.db", // Sqlite Database location
     token_not_tradable_400_error_retries: 5, // How many times should the bot try to get a quote if the token is not tradable yet
@@ -46,12 +46,12 @@ export const config = {
   },
   sell: {
     price_source: "dex", // dex=Dexscreener,jup=Jupiter Agregator (Dex is most accurate and Jupiter is always used as fallback)
-    prio_fee_max_lamports: 10000000, // 0.01 SOL
+    prio_fee_max_lamports: 5000000, // 0.01 SOL
     prio_level: "medium", // If you want to land transaction fast, set this to use `veryHigh`. You will pay on average higher priority fee.
     slippageBps: "200", // 2%
     auto_sell: true, // If set to true, stop loss and take profit triggers automatically when set.
-    stop_loss_percent: 15,
-    take_profit_percent: 20,
+    stop_loss_percent: 30,
+    take_profit_percent: 30,
     track_public_wallet: "", // If set an additional log line will be shown with a link to track your wallet
   },
   rug_check: {
@@ -65,7 +65,7 @@ export const config = {
     allow_freeze_authority: false, // The freeze authority is the address that can freeze token transfers, effectively locking up funds. Strongly Advised to set to false
     allow_rugged: false,
     // Critical
-    allow_mutable: false,
+    allow_mutable: true,
     block_returning_token_names: true,
     block_returning_token_creators: false,
     block_symbols: ["XXX"],
@@ -82,7 +82,7 @@ export const config = {
     min_total_market_Liquidity: 10000,
     // Misc
     ignore_pump_fun: false,
-    max_score: 11500, // Set to 0 to ignore
+    max_score: 15000, // Set to 0 to ignore
     legacy_not_allowed: [
       //"Low Liquidity",
       "Freeze Authority still enabled",

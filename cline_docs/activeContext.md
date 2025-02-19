@@ -6,6 +6,13 @@
 - Performance monitoring implementation
 
 ## Recent Changes
+1. **Position Limit Implementation (18/02/2025)**
+   - Added unified max_positions limit in config.swap
+   - Position limit enforced in both real and paper trading
+   - Added selectAllHoldings function for position tracking
+   - Fixed paper trading balance reset bug
+   - Harmonized trading systems to share same limits
+
 1. **Memory Management System (17/02/2025 PM)**
    - Implemented connection aging and cleanup
    - Added idle connection detection
@@ -76,6 +83,7 @@
    - Professional dashboard
    - Real-time updates
    - Performance tracking
+    - Position limit enforcement
    - Historical analysis
 
 3. **Connection Pooling**
