@@ -174,7 +174,7 @@ async function displayTradingStats(stats: TradingStats): Promise<void> {
     drawBox('📈 Trading Statistics', content);
 }
 
-async function displayRecentTrades(limit: number = 10): Promise<void> {
+async function displayRecentTrades(limit: number = 20): Promise<void> {
     const connectionManager = ConnectionManager.getInstance(DB_PATH);
     try {
         const db = await connectionManager.getConnection();
