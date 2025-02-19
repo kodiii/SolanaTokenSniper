@@ -14,6 +14,7 @@ const PRICE_COL_WIDTH = 20;
 interface TokenPosition {
     token_mint: string;
     token_name: string;
+    base_token_name?: string;  // From DexScreener
     amount: number;
     buy_price: number;
     volume_m5: number;
@@ -31,11 +32,15 @@ interface SimulatedTrade {
     timestamp: number;
     token_mint: string;
     token_name: string;
+    base_token_name?: string;  // From DexScreener
     amount_sol: number;
     amount_token: number;
     price_per_token: number;
     type: 'buy' | 'sell';
     fees: number;
+    volume_m5?: number;       // From DexScreener
+    market_cap?: number;      // From DexScreener
+    liquidity_usd?: number;   // From DexScreener
 }
 
 interface TradingStats {
@@ -146,7 +151,7 @@ async function displayActivePositions(): Promise<void> {
                 const pnlPercent = ((pos.current_price - pos.buy_price) / pos.buy_price) * 100;
                 const pnlColor = pnlPercent >= 0 ? chalk.green : chalk.red;
                 return [
-                    pos.token_name.padEnd(TOKEN_COL_WIDTH),
+                    (pos.base_token_name || pos.token_name).padEnd(TOKEN_COL_WIDTH),
                     pos.amount.toFixed(8).padEnd(NUM_COL_WIDTH),
                     pos.buy_price.toFixed(8).padEnd(PRICE_COL_WIDTH),
                     pos.current_price.toFixed(8).padEnd(PRICE_COL_WIDTH),
@@ -196,7 +201,8 @@ async function displayRecentTrades(limit: number = 20): Promise<void> {
             trades.sort((a, b) => a.timestamp - b.timestamp).forEach(trade => {
                 if (trade.type === 'buy' && !tradeMap.has(trade.token_mint)) {
                     tradeMap.set(trade.token_mint, {
-                        token_name: trade.token_name || trade.token_mint,
+                        token_name: trade.base_token_name || trade.token_name || trade.token_mint,
+                        token_mint: trade.token_mint,
                         volume_m5: Number(trade.volume_m5) || 0,
                         market_cap: Number(trade.market_cap) || 0,
                         liquidity_usd: Number(trade.liquidity_usd) || 0,
@@ -230,10 +236,10 @@ async function displayRecentTrades(limit: number = 20): Promise<void> {
                         : '0%';
 
                     return [
-                        trade.token_name.padEnd(TOKEN_COL_WIDTH),
-                        (trade.volume_m5 ? trade.volume_m5.toFixed(2) : '0').padEnd(NUM_COL_WIDTH),
-                        (trade.market_cap ? trade.market_cap.toFixed(2) : '0').padEnd(NUM_COL_WIDTH),
-                        (trade.liquidity_usd ? trade.liquidity_usd.toFixed(2) : '0').padEnd(NUM_COL_WIDTH),
+                        (trade.base_token_name || trade.token_name).padEnd(TOKEN_COL_WIDTH),
+                        (trade.volume_m5 ? trade.volume_m5.toLocaleString(undefined, {maximumFractionDigits: 2}) : '0').padEnd(NUM_COL_WIDTH),
+                        (trade.market_cap ? trade.market_cap.toLocaleString(undefined, {maximumFractionDigits: 2}) : '0').padEnd(NUM_COL_WIDTH),
+                        (trade.liquidity_usd ? trade.liquidity_usd.toLocaleString(undefined, {maximumFractionDigits: 2}) : '0').padEnd(NUM_COL_WIDTH),
                         trade.buy_price.toFixed(8).padEnd(PRICE_COL_WIDTH),
                         trade.buy_fees.toFixed(8).padEnd(NUM_COL_WIDTH),
                         trade.amount.toFixed(8).padEnd(NUM_COL_WIDTH),
